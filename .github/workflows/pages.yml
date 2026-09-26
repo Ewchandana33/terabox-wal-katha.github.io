@@ -25,7 +25,7 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Validate static files
+      - name: Validate source files
         shell: bash
         run: |
           set -euo pipefail
@@ -39,6 +39,10 @@ jobs:
             "robots.txt"
             "sitemap.xml"
             "ads.txt"
+            ".nojekyll"
+            "public/images/logo.png"
+            "public/images/banner.jpg"
+            "public/images/favicon.png"
           )
 
           for file in "${required_files[@]}"; do
@@ -54,20 +58,39 @@ jobs:
           from html.parser import HTMLParser
           from pathlib import Path
 
-          class DocumentParser(HTMLParser):
+          class StrictHTMLParser(HTMLParser):
               pass
 
           for filename in ("index.html", "404.html"):
-              parser = DocumentParser()
-              parser.feed(Path(filename).read_text(encoding="utf-8"))
+              content = Path(filename).read_text(encoding="utf-8")
+              parser = StrictHTMLParser()
+              parser.feed(content)
               parser.close()
 
-          with Path("manifest.webmanifest").open(encoding="utf-8") as manifest_file:
-              json.load(manifest_file)
+              if "</html>" not in content.lower():
+                  raise SystemExit(f"{filename} is incomplete: missing </html>")
+
+          css = Path("styles.css").read_text(encoding="utf-8")
+
+          if "/* SITE_STYLES_COMPLETE */" not in css:
+              raise SystemExit("styles.css is incomplete")
+
+          if css.count("{") != css.count("}"):
+              raise SystemExit("styles.css contains unmatched braces")
+
+          javascript = Path("app.js").read_text(encoding="utf-8")
+
+          if "/* APP_SCRIPT_COMPLETE */" not in javascript:
+              raise SystemExit("app.js is incomplete")
+
+          with Path("manifest.webmanifest").open(encoding="utf-8") as file:
+              json.load(file)
 
           ET.parse("sitemap.xml")
-          print("Static file validation passed.")
+          print("HTML, CSS, JavaScript, JSON and XML validation passed.")
           PY
+
+          node --check app.js
 
       - name: Prepare deployment directory
         shell: bash
@@ -75,16 +98,31 @@ jobs:
           set -euo pipefail
 
           rm -rf _site
-          mkdir -p _site
+          mkdir -p _site/public/images
 
-          cp index.html _site/
-          cp 404.html _site/
-          cp styles.css _site/
-          cp app.js _site/
-          cp manifest.webmanifest _site/
-          cp robots.txt _site/
-          cp sitemap.xml _site/
-          cp ads.txt _site/
+          cp index.html _site/index.html
+          cp 404.html _site/404.html
+          cp styles.css _site/styles.css
+          cp app.js _site/app.js
+          cp manifest.webmanifest _site/manifest.webmanifest
+          cp robots.txt _site/robots.txt
+          cp sitemap.xml _site/sitemap.xml
+          cp ads.txt _site/ads.txt
+          cp .nojekyll _site/.nojekyll
+
+          cp public/images/logo.png _site/public/images/logo.png
+          cp public/images/banner.jpg _site/public/images/banner.jpg
+          cp public/images/favicon.png _site/public/images/favicon.png
+
+          cmp index.html _site/index.html
+          cmp styles.css _site/styles.css
+          cmp app.js _site/app.js
+          cmp public/images/logo.png _site/public/images/logo.png
+          cmp public/images/banner.jpg _site/public/images/banner.jpg
+          cmp public/images/favicon.png _site/public/images/favicon.png
+
+          echo "Deployment directory prepared successfully."
+          find _site -maxdepth 3 -type f -print
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
