@@ -2,35 +2,107 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
     <meta name="color-scheme" content="light">
-    <meta name="theme-color" content="#dff4ff">
+    <meta name="theme-color" content="#dceffa">
     <meta name="robots" content="noindex, follow">
 
-    <title>404 | Page not found</title>
+    <title>404 | TeraBox Movie Zone</title>
 
     <meta
         name="description"
-        content="The requested page could not be found. Return to the TeraBox Video Hub homepage."
+        content="The requested page could not be found."
     >
 
-    <link
-        rel="icon"
-        href="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/favicon.png"
-        type="image/png"
-    >
+    <link rel="icon" href="/public/images/favicon.png" type="image/png">
     <link rel="stylesheet" href="/styles.css">
+
+    <style>
+        .error-page {
+            display: grid;
+            min-height: 100vh;
+            place-items: center;
+            padding: 24px;
+        }
+
+        .error-card {
+            width: min(100%, 520px);
+            padding: clamp(30px, 8vw, 55px);
+            text-align: center;
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(242, 251, 255, 0.94),
+                    rgba(191, 221, 235, 0.92)
+                );
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 34px;
+            box-shadow:
+                14px 17px 32px rgba(51, 104, 133, 0.3),
+                -12px -12px 28px rgba(255, 255, 255, 0.9);
+        }
+
+        .error-logo {
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 18px;
+            padding: 8px;
+            object-fit: contain;
+            background: #ffffff;
+            border: 5px solid #168fcb;
+            border-radius: 50%;
+        }
+
+        .error-code {
+            margin: 0;
+            color: #0b5f91;
+            font-size: clamp(4rem, 18vw, 8rem);
+            font-weight: 900;
+            letter-spacing: -0.08em;
+            line-height: 0.9;
+        }
+
+        .error-card h1 {
+            margin: 18px 0 0;
+            font-size: clamp(1.6rem, 6vw, 2.5rem);
+        }
+
+        .error-card p:not(.error-code) {
+            margin: 13px 0 0;
+            color: #38566a;
+        }
+
+        .home-button {
+            display: inline-flex;
+            min-height: 52px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 25px;
+            padding: 12px 24px;
+            color: #ffffff;
+            background: linear-gradient(145deg, #159ade, #096ca8);
+            border-radius: 999px;
+            box-shadow: 0 10px 20px rgba(11, 99, 150, 0.27);
+            font-weight: 800;
+            text-decoration: none;
+        }
+    </style>
 </head>
 
 <body>
-    <main class="error-stage">
+    <main class="error-page">
         <section class="error-card" aria-labelledby="error-title">
             <img
                 class="error-logo"
-                src="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/logo.png"
-                width="160"
-                height="160"
-                alt="TeraBox Video Hub logo"
+                src="/public/images/logo.png"
+                width="130"
+                height="130"
+                alt="TeraBox logo"
             >
 
             <p class="error-code" aria-hidden="true">404</p>
@@ -38,8 +110,8 @@
             <h1 id="error-title">Page not found</h1>
 
             <p>
-                The page you requested may have been removed, renamed or entered
-                incorrectly. Return to the homepage to continue browsing.
+                The requested page may have been removed, renamed or entered
+                incorrectly.
             </p>
 
             <a class="home-button" href="/">
