@@ -1,8 +1,6 @@
 "use strict";
-
 const AGE_SESSION_KEY = "video-hub-age-confirmed";
 const LANGUAGE_STORAGE_KEY = "video-hub-language";
-
 const languageNames = {
     en: "English",
     si: "සිංහල",
@@ -10,7 +8,6 @@ const languageNames = {
     es: "Español",
     fr: "Français"
 };
-
 const translations = {
     en: {
         pageTitle: "TeraBox Video Hub | 18+ Video Collections",
@@ -37,6 +34,14 @@ const translations = {
         easyAccess: "Easy access",
         labeledLinks: "Labeled links",
         openNewTab: "Open in a new tab",
+        quickSeamlessTitle: "Seamless",
+        quickSeamlessSub: "Viewing",
+        quickAdFreeTitle: "Ad-Free",
+        quickAdFreeSub: "Playback",
+        quickSpeedTitle: "High-Speed",
+        quickSpeedSub: "Streaming",
+        quickExclusiveTitle: "Exclusive",
+        quickExclusiveSub: "Content",
         experienceKicker: "BETTER BROWSING EXPERIENCE",
         featuresHeading: "Designed for simple and convenient access",
         featuresDescription: "A lightweight interface created for clarity, accessibility and smooth navigation across modern devices.",
@@ -50,7 +55,7 @@ const translations = {
         featureSpeedText: "Optimized for desktop, tablet and mobile screen sizes.",
         collectionKicker: "VIDEO COLLECTIONS",
         collectionsHeading: "Choose a bundle to continue",
-        collectionsDescription: "The buttons below currently use demo destinations. Verified bundle links can be connected later.",
+        collectionsDescription: "These bundle links are placeholders for now. Verified destinations can be connected as they become available.",
         bundleOne: "Video bundle one",
         bundleTwo: "Video bundle two",
         bundleThree: "Video bundle three",
@@ -60,7 +65,7 @@ const translations = {
         demoCollection: "Demo collection link",
         officialApp: "OFFICIAL TERABOX APPLICATION",
         appHeading: "Get the TeraBox app from Google Play",
-        appDescription: "Install the official TeraBox application before opening supported collection links.",
+        appDescription: "Install the official TeraBox application to manage and play your files.",
         getItOn: "GET IT ON",
         guideKicker: "QUICK ACCESS GUIDE",
         guideHeading: "How to use this directory",
@@ -78,7 +83,6 @@ const translations = {
         rightsText: "All rights reserved.",
         changeLanguage: "Change language"
     },
-
     si: {
         pageTitle: "TeraBox Video Hub | 18+ වීඩියෝ එකතු",
         metaDescription: "පැහැදිලිව සලකුණු කළ external links සමඟ mobile-friendly video collection directory එකක් ගවේෂණය කරන්න.",
@@ -104,6 +108,14 @@ const translations = {
         easyAccess: "පහසු ප්‍රවේශය",
         labeledLinks: "සලකුණු කළ links",
         openNewTab: "නව tab එකක විවෘත වේ",
+        quickSeamlessTitle: "බාධාවකින් තොර",
+        quickSeamlessSub: "නැරඹීම",
+        quickAdFreeTitle: "වෙළඳ දැන්වීම් රහිත",
+        quickAdFreeSub: "Playback",
+        quickSpeedTitle: "වේගවත්",
+        quickSpeedSub: "Streaming",
+        quickExclusiveTitle: "විශේෂිත",
+        quickExclusiveSub: "අන්තර්ගතය",
         experienceKicker: "වඩා හොඳ BROWSING අත්දැකීම",
         featuresHeading: "සරල සහ පහසු ප්‍රවේශයක් සඳහා නිර්මාණය කර ඇත",
         featuresDescription: "පැහැදිලි බව, accessibility සහ සියලු නවීන උපාංගවල සුමට navigation සඳහා සකස් කළ සැහැල්ලු interface එකකි.",
@@ -117,7 +129,7 @@ const translations = {
         featureSpeedText: "Desktop, tablet සහ mobile screen සඳහා ප්‍රශස්ත කර ඇත.",
         collectionKicker: "වීඩියෝ එකතු",
         collectionsHeading: "ඉදිරියට යාමට bundle එකක් තෝරන්න",
-        collectionsDescription: "පහත buttons දැනට demo destinations භාවිතා කරයි. Verified bundle links පසුව සම්බන්ධ කළ හැක.",
+        collectionsDescription: "පහත බොත්තම් තාවකාලික ලින්ක් වේ. සත්‍යාපිත ලින්ක් අනාගතයේදී සම්බන්ධ කළ හැක.",
         bundleOne: "වීඩියෝ bundle එක",
         bundleTwo: "වීඩියෝ bundle දෙක",
         bundleThree: "වීඩියෝ bundle තුන",
@@ -127,7 +139,7 @@ const translations = {
         demoCollection: "Demo collection link",
         officialApp: "නිල TERABOX APPLICATION එක",
         appHeading: "Google Play වෙතින් TeraBox app එක ලබාගන්න",
-        appDescription: "සහාය දක්වන collection links විවෘත කිරීමට පෙර නිල TeraBox application එක ස්ථාපනය කරන්න.",
+        appDescription: "ඔබගේ files කළමනාකරණය කිරීමට සහ play කිරීමට නිල TeraBox application එක install කරන්න.",
         getItOn: "ලබාගන්න",
         guideKicker: "ඉක්මන් ප්‍රවේශ මාර්ගෝපදේශය",
         guideHeading: "මෙම directory එක භාවිතා කරන ආකාරය",
@@ -145,7 +157,6 @@ const translations = {
         rightsText: "සියලු හිමිකම් ඇවිරිණි.",
         changeLanguage: "භාෂාව වෙනස් කරන්න"
     },
-
     hi: {
         pageTitle: "TeraBox Video Hub | 18+ वीडियो संग्रह",
         metaDescription: "स्पष्ट रूप से चिह्नित बाहरी लिंक के साथ मोबाइल-अनुकूल वीडियो संग्रह निर्देशिका देखें।",
@@ -171,6 +182,14 @@ const translations = {
         easyAccess: "आसान पहुंच",
         labeledLinks: "चिह्नित लिंक",
         openNewTab: "नए टैब में खुलेगा",
+        quickSeamlessTitle: "निर्बाध",
+        quickSeamlessSub: "देखना",
+        quickAdFreeTitle: "विज्ञापन-मुक्त",
+        quickAdFreeSub: "Playback",
+        quickSpeedTitle: "तेज़",
+        quickSpeedSub: "Streaming",
+        quickExclusiveTitle: "विशेष",
+        quickExclusiveSub: "सामग्री",
         experienceKicker: "बेहतर ब्राउज़िंग अनुभव",
         featuresHeading: "सरल और सुविधाजनक पहुंच के लिए डिज़ाइन किया गया",
         featuresDescription: "स्पष्टता, accessibility और आधुनिक उपकरणों पर आसान navigation के लिए हल्का interface।",
@@ -184,7 +203,7 @@ const translations = {
         featureSpeedText: "Desktop, tablet और mobile स्क्रीन के लिए अनुकूलित।",
         collectionKicker: "वीडियो संग्रह",
         collectionsHeading: "आगे बढ़ने के लिए बंडल चुनें",
-        collectionsDescription: "नीचे दिए गए buttons अभी demo destinations उपयोग करते हैं। Verified links बाद में जोड़े जा सकते हैं।",
+        collectionsDescription: "नीचे दिए गए बटन अस्थायी लिंक हैं। सत्यापित लिंक बाद में जोड़े जा सकते हैं।",
         bundleOne: "वीडियो बंडल एक",
         bundleTwo: "वीडियो बंडल दो",
         bundleThree: "वीडियो बंडल तीन",
@@ -194,7 +213,7 @@ const translations = {
         demoCollection: "Demo collection link",
         officialApp: "आधिकारिक TERABOX APPLICATION",
         appHeading: "Google Play से TeraBox app प्राप्त करें",
-        appDescription: "समर्थित collection links खोलने से पहले आधिकारिक TeraBox application install करें।",
+        appDescription: "अपनी फ़ाइलें प्रबंधित करने और चलाने के लिए आधिकारिक TeraBox एप्लिकेशन इंस्टॉल करें।",
         getItOn: "यहां प्राप्त करें",
         guideKicker: "त्वरित एक्सेस गाइड",
         guideHeading: "इस निर्देशिका का उपयोग कैसे करें",
@@ -212,7 +231,6 @@ const translations = {
         rightsText: "सर्वाधिकार सुरक्षित।",
         changeLanguage: "भाषा बदलें"
     },
-
     es: {
         pageTitle: "TeraBox Video Hub | Colecciones de vídeo 18+",
         metaDescription: "Explora un directorio de colecciones de vídeo optimizado para móviles con enlaces externos claramente identificados.",
@@ -238,6 +256,14 @@ const translations = {
         easyAccess: "Acceso sencillo",
         labeledLinks: "Enlaces identificados",
         openNewTab: "Abrir en una pestaña nueva",
+        quickSeamlessTitle: "Sin interrupciones",
+        quickSeamlessSub: "Visualización",
+        quickAdFreeTitle: "Sin anuncios",
+        quickAdFreeSub: "Reproducción",
+        quickSpeedTitle: "Alta velocidad",
+        quickSpeedSub: "Streaming",
+        quickExclusiveTitle: "Exclusivo",
+        quickExclusiveSub: "Contenido",
         experienceKicker: "UNA MEJOR EXPERIENCIA",
         featuresHeading: "Diseñado para un acceso sencillo y cómodo",
         featuresDescription: "Una interfaz ligera creada para ofrecer claridad, accesibilidad y navegación fluida.",
@@ -251,7 +277,7 @@ const translations = {
         featureSpeedText: "Optimizado para ordenadores, tabletas y móviles.",
         collectionKicker: "COLECCIONES DE VÍDEO",
         collectionsHeading: "Elige un paquete para continuar",
-        collectionsDescription: "Los botones siguientes utilizan destinos de demostración. Los enlaces verificados se pueden añadir después.",
+        collectionsDescription: "Estos enlaces son provisionales por ahora. Los enlaces verificados podrán añadirse a medida que estén disponibles.",
         bundleOne: "Paquete de vídeo uno",
         bundleTwo: "Paquete de vídeo dos",
         bundleThree: "Paquete de vídeo tres",
@@ -261,7 +287,7 @@ const translations = {
         demoCollection: "Enlace de demostración",
         officialApp: "APLICACIÓN OFICIAL DE TERABOX",
         appHeading: "Obtén TeraBox desde Google Play",
-        appDescription: "Instala la aplicación oficial de TeraBox antes de abrir enlaces compatibles.",
+        appDescription: "Instala la aplicación oficial de TeraBox para gestionar y reproducir tus archivos.",
         getItOn: "DISPONIBLE EN",
         guideKicker: "GUÍA DE ACCESO RÁPIDO",
         guideHeading: "Cómo utilizar este directorio",
@@ -279,7 +305,6 @@ const translations = {
         rightsText: "Todos los derechos reservados.",
         changeLanguage: "Cambiar idioma"
     },
-
     fr: {
         pageTitle: "TeraBox Video Hub | Collections vidéo 18+",
         metaDescription: "Explorez un annuaire de collections vidéo adapté aux mobiles avec des liens externes clairement identifiés.",
@@ -305,6 +330,14 @@ const translations = {
         easyAccess: "Accès facile",
         labeledLinks: "Liens identifiés",
         openNewTab: "Ouverture dans un nouvel onglet",
+        quickSeamlessTitle: "Fluide",
+        quickSeamlessSub: "Visionnage",
+        quickAdFreeTitle: "Sans publicité",
+        quickAdFreeSub: "Lecture",
+        quickSpeedTitle: "Haute vitesse",
+        quickSpeedSub: "Streaming",
+        quickExclusiveTitle: "Exclusif",
+        quickExclusiveSub: "Contenu",
         experienceKicker: "UNE MEILLEURE EXPÉRIENCE",
         featuresHeading: "Conçu pour un accès simple et pratique",
         featuresDescription: "Une interface légère conçue pour la clarté, l’accessibilité et une navigation fluide.",
@@ -318,7 +351,7 @@ const translations = {
         featureSpeedText: "Optimisé pour les ordinateurs, tablettes et appareils mobiles.",
         collectionKicker: "COLLECTIONS VIDÉO",
         collectionsHeading: "Choisissez une collection pour continuer",
-        collectionsDescription: "Les boutons utilisent actuellement des destinations de démonstration. Les liens vérifiés pourront être ajoutés ultérieurement.",
+        collectionsDescription: "Ces liens sont provisoires pour le moment. Des liens vérifiés pourront être ajoutés ultérieurement.",
         bundleOne: "Collection vidéo un",
         bundleTwo: "Collection vidéo deux",
         bundleThree: "Collection vidéo trois",
@@ -328,7 +361,7 @@ const translations = {
         demoCollection: "Lien de démonstration",
         officialApp: "APPLICATION TERABOX OFFICIELLE",
         appHeading: "Téléchargez TeraBox depuis Google Play",
-        appDescription: "Installez l’application officielle TeraBox avant d’ouvrir les liens compatibles.",
+        appDescription: "Installez l’application officielle TeraBox pour gérer et lire vos fichiers.",
         getItOn: "DISPONIBLE SUR",
         guideKicker: "GUIDE D’ACCÈS RAPIDE",
         guideHeading: "Comment utiliser cet annuaire",
@@ -347,11 +380,9 @@ const translations = {
         changeLanguage: "Changer de langue"
     }
 };
-
 function getElement(id) {
     return document.getElementById(id);
 }
-
 function safelyReadStorage(storage, key) {
     try {
         return storage.getItem(key);
@@ -359,7 +390,6 @@ function safelyReadStorage(storage, key) {
         return null;
     }
 }
-
 function safelyWriteStorage(storage, key, value) {
     try {
         storage.setItem(key, value);
@@ -367,51 +397,39 @@ function safelyWriteStorage(storage, key, value) {
         return;
     }
 }
-
 function openDialog(dialog) {
     if (!(dialog instanceof HTMLDialogElement)) {
         return;
     }
-
     document.body.classList.add("dialog-open");
-
     if (typeof dialog.showModal === "function") {
         dialog.showModal();
         return;
     }
-
     dialog.setAttribute("open", "");
 }
-
 function closeDialog(dialog) {
     if (!(dialog instanceof HTMLDialogElement)) {
         return;
     }
-
     if (typeof dialog.close === "function" && dialog.open) {
         dialog.close();
     } else {
         dialog.removeAttribute("open");
     }
-
     document.body.classList.remove("dialog-open");
 }
-
 function showLanguageDialog() {
     const languageDialog = getElement("language-dialog");
-
     if (!(languageDialog instanceof HTMLDialogElement)) {
         return;
     }
-
     openDialog(languageDialog);
 }
-
 function initializeAccessFlow() {
     const ageDialog = getElement("age-dialog");
     const languageDialog = getElement("language-dialog");
     const ageConfirmButton = getElement("age-confirm");
-
     if (
         !(ageDialog instanceof HTMLDialogElement) ||
         !(languageDialog instanceof HTMLDialogElement) ||
@@ -419,36 +437,29 @@ function initializeAccessFlow() {
     ) {
         return;
     }
-
     ageDialog.addEventListener("cancel", (event) => {
         event.preventDefault();
     });
-
     languageDialog.addEventListener("cancel", (event) => {
         event.preventDefault();
     });
-
     ageConfirmButton.addEventListener("click", () => {
         safelyWriteStorage(window.sessionStorage, AGE_SESSION_KEY, "true");
         closeDialog(ageDialog);
-
         window.setTimeout(() => {
             showLanguageDialog();
         }, 120);
     });
-
     const ageConfirmed = safelyReadStorage(
         window.sessionStorage,
         AGE_SESSION_KEY
     );
-
     if (ageConfirmed === "true") {
         showLanguageDialog();
     } else {
         openDialog(ageDialog);
     }
 }
-
 function updateMetadata(language) {
     const translation = translations[language];
     const description = getElement("meta-description");
@@ -456,28 +467,22 @@ function updateMetadata(language) {
     const openGraphDescription = getElement("og-description");
     const twitterTitle = getElement("twitter-title");
     const twitterDescription = getElement("twitter-description");
-
     document.title = translation.pageTitle;
-
     if (description) {
         description.setAttribute("content", translation.metaDescription);
     }
-
     if (openGraphTitle) {
         openGraphTitle.setAttribute("content", translation.pageTitle);
     }
-
     if (openGraphDescription) {
         openGraphDescription.setAttribute(
             "content",
             translation.metaDescription
         );
     }
-
     if (twitterTitle) {
         twitterTitle.setAttribute("content", translation.pageTitle);
     }
-
     if (twitterDescription) {
         twitterDescription.setAttribute(
             "content",
@@ -485,27 +490,21 @@ function updateMetadata(language) {
         );
     }
 }
-
 function applyLanguage(language) {
     const safeLanguage = translations[language] ? language : "en";
     const translation = translations[safeLanguage];
     const activeLanguageLabel = getElement("active-language-label");
-
     document.documentElement.lang = safeLanguage;
     document.documentElement.dir = "ltr";
-
     document.querySelectorAll("[data-i18n]").forEach((element) => {
         const translationKey = element.getAttribute("data-i18n");
-
         if (translationKey && translation[translationKey]) {
             element.textContent = translation[translationKey];
         }
     });
-
     if (activeLanguageLabel) {
         activeLanguageLabel.textContent = languageNames[safeLanguage];
     }
-
     updateMetadata(safeLanguage);
     safelyWriteStorage(
         window.localStorage,
@@ -513,45 +512,35 @@ function applyLanguage(language) {
         safeLanguage
     );
 }
-
 function initializeLanguageControls() {
     const languageDialog = getElement("language-dialog");
     const changeLanguageButton = getElement("change-language");
     const footerLanguageButton = getElement("footer-language-button");
-
     document.querySelectorAll("[data-language]").forEach((button) => {
         button.addEventListener("click", () => {
             const language = button.getAttribute("data-language") || "en";
-
             applyLanguage(language);
-
             if (languageDialog instanceof HTMLDialogElement) {
                 closeDialog(languageDialog);
             }
         });
     });
-
     [changeLanguageButton, footerLanguageButton].forEach((button) => {
         if (!(button instanceof HTMLButtonElement)) {
             return;
         }
-
         button.addEventListener("click", () => {
             showLanguageDialog();
         });
     });
 }
-
 function initializeExternalLinkLabels() {
     const externalLinks = document.querySelectorAll('a[target="_blank"]');
-
     externalLinks.forEach((link) => {
         if (link.hasAttribute("aria-label")) {
             return;
         }
-
         const linkText = link.textContent.trim();
-
         if (linkText) {
             link.setAttribute(
                 "aria-label",
@@ -560,24 +549,19 @@ function initializeExternalLinkLabels() {
         }
     });
 }
-
 function updateCopyrightYear() {
     const yearElement = getElement("current-year");
-
     if (yearElement) {
         yearElement.textContent = String(new Date().getFullYear());
     }
 }
-
 function initializeApplication() {
     const savedLanguage =
         safelyReadStorage(window.localStorage, LANGUAGE_STORAGE_KEY) || "en";
-
     applyLanguage(savedLanguage);
     updateCopyrightYear();
     initializeLanguageControls();
     initializeExternalLinkLabels();
     initializeAccessFlow();
 }
-
 document.addEventListener("DOMContentLoaded", initializeApplication);
