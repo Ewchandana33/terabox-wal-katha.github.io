@@ -565,3 +565,5 @@ function initializeApplication() {
     initializeAccessFlow();
 }
 document.addEventListener("DOMContentLoaded", initializeApplication);
+
+/* APP_SCRIPT_COMPLETE */
