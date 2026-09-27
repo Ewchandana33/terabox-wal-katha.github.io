@@ -1,22 +1,22 @@
 {
     "id": "/",
-    "name": "TeraBox Video Hub",
-    "short_name": "Video Hub",
-    "description": "A multilingual, mobile-friendly directory of curated external video collection links.",
+    "name": "TeraBox Movie Zone",
+    "short_name": "TeraBox Zone",
+    "description": "Your global hub for TeraBox video content and external bundle links.",
     "lang": "en",
     "dir": "ltr",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "orientation": "any",
-    "background_color": "#e6f5fc",
-    "theme_color": "#dff4ff",
+    "orientation": "portrait",
+    "background_color": "#d8eef9",
+    "theme_color": "#dceffa",
     "categories": [
         "entertainment"
     ],
     "icons": [
         {
-            "src": "https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/favicon.png",
+            "src": "/public/images/favicon.png",
             "sizes": "any",
             "type": "image/png",
             "purpose": "any"
