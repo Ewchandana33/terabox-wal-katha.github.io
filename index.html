@@ -4,21 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <meta name="theme-color" content="#dff4ff">
+    <meta name="theme-color" content="#dff6ff">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="rating" content="adult">
-
-    <meta
-        http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://raw.githubusercontent.com data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
-    >
 
     <title>TeraBox Video Hub | 18+ Video Collections</title>
 
     <meta
         id="meta-description"
         name="description"
-        content="Explore a mobile-friendly directory of curated video collections with clearly labeled external links."
+        content="Explore a responsive directory of curated video collections with clearly labeled external links."
     >
     <meta
         name="robots"
@@ -27,18 +22,11 @@
     <meta name="application-name" content="TeraBox Video Hub">
 
     <link rel="canonical" href="https://wal-katha.github.io/">
-    <link rel="manifest" href="/manifest.webmanifest">
-    <link
-        rel="icon"
-        href="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/favicon.png"
-        type="image/png"
-    >
-    <link
-        rel="apple-touch-icon"
-        href="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/favicon.png"
-    >
-    <link rel="preconnect" href="https://raw.githubusercontent.com">
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./public/images/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="./public/images/favicon.png">
+    <link rel="preload" href="./public/images/banner.jpg" as="image">
+    <link rel="stylesheet" href="./styles.css?v=20260926-2">
 
     <meta property="og:type" content="website">
     <meta property="og:locale" content="en_US">
@@ -51,29 +39,29 @@
     <meta
         id="og-description"
         property="og:description"
-        content="Explore a mobile-friendly directory of curated video collections."
+        content="Explore a responsive directory of curated video collections."
     >
     <meta property="og:url" content="https://wal-katha.github.io/">
     <meta
         property="og:image"
-        content="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/banner.jpg"
+        content="https://wal-katha.github.io/public/images/banner.jpg"
     >
-    <meta property="og:image:alt" content="TeraBox Video Hub banner">
+    <meta property="og:image:alt" content="TeraBox Video Hub video collection banner">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta
         id="twitter-title"
         name="twitter:title"
-        content="TeraBox Video Hub"
+        content="TeraBox Video Hub | 18+ Video Collections"
     >
     <meta
         id="twitter-description"
         name="twitter:description"
-        content="Explore a mobile-friendly directory of curated video collections."
+        content="Explore a responsive directory of curated video collections."
     >
     <meta
         name="twitter:image"
-        content="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/banner.jpg"
+        content="https://wal-katha.github.io/public/images/banner.jpg"
     >
 
     <script type="application/ld+json">
@@ -85,15 +73,15 @@
                 "@id": "https://wal-katha.github.io/#website",
                 "url": "https://wal-katha.github.io/",
                 "name": "TeraBox Video Hub",
-                "description": "A mobile-friendly directory of curated external video collection links.",
-                "inLanguage": "en"
+                "description": "A responsive directory of curated external video collection links.",
+                "inLanguage": ["en", "si", "hi", "es", "fr"]
             },
             {
                 "@type": "WebPage",
                 "@id": "https://wal-katha.github.io/#webpage",
                 "url": "https://wal-katha.github.io/",
                 "name": "TeraBox Video Hub | 18+ Video Collections",
-                "description": "Explore a mobile-friendly directory of curated video collections.",
+                "description": "Explore a responsive directory of curated video collections.",
                 "isPartOf": {
                     "@id": "https://wal-katha.github.io/#website"
                 },
@@ -108,52 +96,42 @@
     }
     </script>
 </head>
-
 <body>
     <a class="skip-link" href="#main-content" data-i18n="skipLink">
         Skip to main content
     </a>
 
-    <div class="background-decoration decoration-one" aria-hidden="true"></div>
-    <div class="background-decoration decoration-two" aria-hidden="true"></div>
-    <div class="background-decoration decoration-three" aria-hidden="true"></div>
-
     <dialog
         class="access-dialog"
         id="age-dialog"
-        aria-labelledby="age-dialog-title"
-        aria-describedby="age-dialog-description"
+        aria-labelledby="age-title"
+        aria-describedby="age-description"
     >
-        <div class="dialog-logo">
+        <div class="dialog-brand">
             <img
-                src="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/logo.png"
-                width="160"
-                height="160"
+                src="./public/images/logo.png"
+                width="120"
+                height="120"
                 alt="TeraBox Video Hub logo"
             >
         </div>
 
-        <span class="age-badge" aria-hidden="true">18+</span>
+        <span class="age-mark" aria-hidden="true">18+</span>
 
-        <h2 id="age-dialog-title">Age verification</h2>
+        <h2 id="age-title">Age verification</h2>
 
-        <p id="age-dialog-description">
+        <p id="age-description">
             This website is intended only for adults aged 18 or older.
-            Please confirm that you meet the minimum legal age required
-            in your location.
+            Confirm that you meet the minimum legal age required in your location.
         </p>
 
         <div class="dialog-actions">
-            <button
-                class="dialog-button dialog-button-primary"
-                id="age-confirm"
-                type="button"
-            >
+            <button class="button button-primary" id="age-confirm" type="button">
                 I am 18 or older
             </button>
 
             <a
-                class="dialog-button dialog-button-secondary"
+                class="button button-muted"
                 href="https://www.google.com/"
                 rel="noopener noreferrer nofollow"
             >
@@ -161,27 +139,27 @@
             </a>
         </div>
 
-        <p class="dialog-privacy">
-            Your confirmation is stored only for the current browser session.
-        </p>
+        <small class="dialog-note">
+            Your confirmation is retained only for the current browser session.
+        </small>
     </dialog>
 
     <dialog
-        class="access-dialog language-dialog"
+        class="access-dialog"
         id="language-dialog"
-        aria-labelledby="language-dialog-title"
-        aria-describedby="language-dialog-description"
+        aria-labelledby="language-title"
+        aria-describedby="language-description"
     >
-        <div class="language-symbol" aria-hidden="true">文</div>
+        <span class="language-mark" aria-hidden="true">A</span>
 
-        <h2 id="language-dialog-title">Choose your language</h2>
+        <h2 id="language-title">Choose your language</h2>
 
-        <p id="language-dialog-description">
-            Select the language you would like to use on this website.
+        <p id="language-description">
+            Select the language you want to use on this website.
         </p>
 
-        <div class="language-list" role="group" aria-label="Available languages">
-            <button class="language-button" type="button" data-language="en">
+        <div class="language-options" role="group" aria-label="Available languages">
+            <button type="button" data-language="en">
                 <span class="language-code">EN</span>
                 <span>
                     <strong>English</strong>
@@ -189,7 +167,7 @@
                 </span>
             </button>
 
-            <button class="language-button" type="button" data-language="si">
+            <button type="button" data-language="si">
                 <span class="language-code">SI</span>
                 <span>
                     <strong>සිංහල</strong>
@@ -197,7 +175,7 @@
                 </span>
             </button>
 
-            <button class="language-button" type="button" data-language="hi">
+            <button type="button" data-language="hi">
                 <span class="language-code">HI</span>
                 <span>
                     <strong>हिन्दी</strong>
@@ -205,7 +183,7 @@
                 </span>
             </button>
 
-            <button class="language-button" type="button" data-language="es">
+            <button type="button" data-language="es">
                 <span class="language-code">ES</span>
                 <span>
                     <strong>Español</strong>
@@ -213,7 +191,7 @@
                 </span>
             </button>
 
-            <button class="language-button" type="button" data-language="fr">
+            <button type="button" data-language="fr">
                 <span class="language-code">FR</span>
                 <span>
                     <strong>Français</strong>
@@ -224,66 +202,62 @@
     </dialog>
 
     <header class="site-header">
-        <div class="header-container">
-            <a class="site-brand" href="/" aria-label="TeraBox Video Hub home">
+        <div class="container header-layout">
+            <a class="brand" href="#home" aria-label="TeraBox Video Hub home">
                 <img
-                    src="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/logo.png"
-                    width="96"
-                    height="96"
+                    src="./public/images/logo.png"
+                    width="68"
+                    height="68"
                     alt="TeraBox Video Hub logo"
-                    fetchpriority="high"
                 >
 
-                <span class="site-brand-text">
+                <span>
                     <strong>TeraBox</strong>
                     <small data-i18n="brandSubtitle">Video Hub</small>
                 </span>
             </a>
 
-            <nav class="desktop-navigation" aria-label="Primary navigation">
+            <nav class="primary-navigation" aria-label="Primary navigation">
                 <a href="#home" data-i18n="navHome">Home</a>
                 <a href="#collections" data-i18n="navCollections">Collections</a>
                 <a href="#features" data-i18n="navFeatures">Features</a>
-                <a href="#instructions" data-i18n="navGuide">Access guide</a>
+                <a href="#guide" data-i18n="navGuide">Access guide</a>
             </nav>
 
             <button
-                class="header-language-button"
+                class="language-toggle"
                 id="change-language"
                 type="button"
                 aria-label="Change language"
             >
-                <span aria-hidden="true">文</span>
-                <span id="active-language-label">English</span>
+                <span class="language-toggle-icon" aria-hidden="true">A</span>
+                <span id="active-language">English</span>
             </button>
         </div>
     </header>
 
     <main id="main-content">
-        <section class="hero-section" id="home">
-            <div class="page-container hero-layout">
-                <div class="hero-copy">
-                    <div class="eyebrow">
-                        <span class="eyebrow-dot" aria-hidden="true"></span>
+        <section class="hero" id="home">
+            <div class="container hero-layout">
+                <div class="hero-content">
+                    <p class="eyebrow">
+                        <span aria-hidden="true"></span>
                         <span data-i18n="eyebrow">18+ CURATED VIDEO DIRECTORY</span>
-                    </div>
+                    </p>
 
                     <h1>
-                        <span data-i18n="heroTitleFirst">Discover your next</span>
-                        <span class="gradient-text" data-i18n="heroTitleAccent">
-                            video collection
-                        </span>
+                        <span data-i18n="heroTitle">Discover your next</span>
+                        <strong data-i18n="heroAccent">video collection</strong>
                     </h1>
 
                     <p class="hero-description" data-i18n="heroDescription">
-                        Explore a clean, fast and mobile-friendly directory of
-                        selected TeraBox video bundles with clearly labeled
-                        external links.
+                        Explore a clean, fast and responsive directory of selected
+                        TeraBox video bundles with clearly labeled external links.
                     </p>
 
-                    <div class="hero-actions">
+                    <div class="hero-buttons">
                         <a
-                            class="primary-button"
+                            class="button button-primary"
                             href="#collections"
                             data-i18n="exploreButton"
                         >
@@ -291,7 +265,7 @@
                         </a>
 
                         <a
-                            class="secondary-button"
+                            class="button button-secondary"
                             href="https://play.google.com/store/apps/details?id=com.dubox.drive"
                             target="_blank"
                             rel="noopener noreferrer nofollow"
@@ -301,158 +275,146 @@
                         </a>
                     </div>
 
-                    <div class="hero-assurance">
-                        <span>
+                    <ul class="hero-points" aria-label="Website features">
+                        <li>
                             <strong>18+</strong>
-                            <small data-i18n="adultOnly">Adults only</small>
-                        </span>
-                        <span>
-                            <strong data-i18n="responsiveTitle">Responsive</strong>
-                            <small data-i18n="allDevices">All devices</small>
-                        </span>
-                        <span>
-                            <strong data-i18n="clearLinksTitle">Clear links</strong>
-                            <small data-i18n="externalLabels">External labels</small>
-                        </span>
-                    </div>
+                            <span data-i18n="adultsOnly">Adults only</span>
+                        </li>
+                        <li>
+                            <strong data-i18n="responsive">Responsive</strong>
+                            <span data-i18n="allDevices">All devices</span>
+                        </li>
+                        <li>
+                            <strong data-i18n="clearLinks">Clear links</strong>
+                            <span data-i18n="externalLabels">External labels</span>
+                        </li>
+                    </ul>
                 </div>
 
-                <div class="hero-visual">
-                    <div class="hero-image-frame">
+                <div class="hero-media">
+                    <div class="banner-frame">
                         <img
-                            src="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/banner.jpg"
+                            src="./public/images/banner.jpg"
                             width="1200"
                             height="675"
-                            alt="TeraBox Video Hub collection banner"
+                            alt="TeraBox Video Hub video collection banner"
                             fetchpriority="high"
                         >
 
-                        <div class="hero-image-overlay" aria-hidden="true"></div>
+                        <span class="banner-overlay" aria-hidden="true"></span>
 
                         <a
-                            class="hero-play-button"
+                            class="play-button"
                             href="https://example.com/"
                             target="_blank"
                             rel="noopener noreferrer nofollow"
-                            aria-label="Open demo video preview"
+                            aria-label="Open demo video preview in a new tab"
                         >
                             <span aria-hidden="true"></span>
                         </a>
 
-                        <div class="hero-image-label">
-                            <span class="live-indicator" aria-hidden="true"></span>
+                        <span class="preview-label">
+                            <i aria-hidden="true"></i>
                             <span data-i18n="previewReady">Preview ready</span>
-                        </div>
+                        </span>
                     </div>
 
-                    <div class="floating-card floating-card-top">
-                        <span class="floating-icon" aria-hidden="true">▶</span>
+                    <div class="media-note media-note-top">
+                        <span class="media-note-icon" aria-hidden="true">6</span>
                         <span>
                             <strong data-i18n="multipleBundles">Multiple bundles</strong>
                             <small data-i18n="easyAccess">Easy access</small>
                         </span>
                     </div>
 
-                    <div class="floating-card floating-card-bottom">
-                        <span class="floating-icon floating-icon-secure" aria-hidden="true">✓</span>
+                    <div class="media-note media-note-bottom">
+                        <span class="media-note-icon media-note-green" aria-hidden="true">OK</span>
                         <span>
                             <strong data-i18n="labeledLinks">Labeled links</strong>
-                            <small data-i18n="openNewTab">Open in a new tab</small>
+                            <small data-i18n="newTab">Open in a new tab</small>
                         </span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="features-section" id="features">
-            <div class="page-container">
-                <div class="section-introduction">
-                    <span class="section-kicker" data-i18n="experienceKicker">
-                        BETTER BROWSING EXPERIENCE
-                    </span>
-
-                    <h2 data-i18n="featuresHeading">
+        <section class="section features" id="features">
+            <div class="container">
+                <header class="section-header">
+                    <span data-i18n="featuresKicker">BETTER BROWSING EXPERIENCE</span>
+                    <h2 data-i18n="featuresTitle">
                         Designed for simple and convenient access
                     </h2>
-
-                    <p data-i18n="featuresDescription">
+                    <p data-i18n="featuresText">
                         A lightweight interface created for clarity, accessibility
                         and smooth navigation across modern devices.
                     </p>
-                </div>
+                </header>
 
-                <div class="features-grid">
+                <div class="feature-grid">
                     <article class="feature-card">
-                        <span class="feature-number" aria-hidden="true">01</span>
-                        <div class="feature-card-icon" aria-hidden="true">18+</div>
-                        <h3 data-i18n="featureAgeTitle">Age-aware access</h3>
-                        <p data-i18n="featureAgeText">
-                            An age confirmation is shown before website access.
+                        <span class="card-number">01</span>
+                        <span class="card-icon">18+</span>
+                        <h3 data-i18n="ageFeatureTitle">Age-aware access</h3>
+                        <p data-i18n="ageFeatureText">
+                            Age confirmation is required before website access.
                         </p>
                     </article>
 
                     <article class="feature-card">
-                        <span class="feature-number" aria-hidden="true">02</span>
-                        <div class="feature-card-icon" aria-hidden="true">文</div>
-                        <h3 data-i18n="featureLanguageTitle">Five languages</h3>
-                        <p data-i18n="featureLanguageText">
-                            Browse the interface in English, Sinhala, Hindi,
-                            Spanish or French.
+                        <span class="card-number">02</span>
+                        <span class="card-icon">A</span>
+                        <h3 data-i18n="languageFeatureTitle">Five languages</h3>
+                        <p data-i18n="languageFeatureText">
+                            Use the interface in English, Sinhala, Hindi, Spanish or French.
                         </p>
                     </article>
 
                     <article class="feature-card">
-                        <span class="feature-number" aria-hidden="true">03</span>
-                        <div class="feature-card-icon" aria-hidden="true">↗</div>
-                        <h3 data-i18n="featureLinksTitle">Clear destinations</h3>
-                        <p data-i18n="featureLinksText">
-                            External destinations are opened separately and
-                            clearly identified.
+                        <span class="card-number">03</span>
+                        <span class="card-icon">URL</span>
+                        <h3 data-i18n="linkFeatureTitle">Clear destinations</h3>
+                        <p data-i18n="linkFeatureText">
+                            External destinations are opened separately and clearly identified.
                         </p>
                     </article>
 
                     <article class="feature-card">
-                        <span class="feature-number" aria-hidden="true">04</span>
-                        <div class="feature-card-icon" aria-hidden="true">⚡</div>
-                        <h3 data-i18n="featureSpeedTitle">Fast and responsive</h3>
-                        <p data-i18n="featureSpeedText">
-                            Optimized for desktop, tablet and mobile screen sizes.
+                        <span class="card-number">04</span>
+                        <span class="card-icon">FAST</span>
+                        <h3 data-i18n="speedFeatureTitle">Fast and responsive</h3>
+                        <p data-i18n="speedFeatureText">
+                            Optimized for desktop, tablet and mobile screens.
                         </p>
                     </article>
                 </div>
             </div>
         </section>
 
-        <section class="collections-section" id="collections">
-            <div class="page-container">
-                <div class="section-introduction section-introduction-light">
-                    <span class="section-kicker" data-i18n="collectionKicker">
-                        VIDEO COLLECTIONS
-                    </span>
-
-                    <h2 data-i18n="collectionsHeading">
-                        Choose a bundle to continue
-                    </h2>
-
-                    <p data-i18n="collectionsDescription">
-                        The buttons below currently use demo destinations.
+        <section class="section collections" id="collections">
+            <div class="container">
+                <header class="section-header section-header-light">
+                    <span data-i18n="collectionsKicker">VIDEO COLLECTIONS</span>
+                    <h2 data-i18n="collectionsTitle">Choose a bundle to continue</h2>
+                    <p data-i18n="collectionsText">
+                        These buttons currently use demo destinations.
                         Verified bundle links can be connected later.
                     </p>
-                </div>
+                </header>
 
-                <nav class="collections-grid" aria-label="Video bundle links">
+                <nav class="collection-grid" aria-label="Video bundle links">
                     <a
                         class="collection-card"
                         href="https://example.com/"
                         target="_blank"
                         rel="noopener noreferrer nofollow"
                     >
-                        <span class="collection-index">01</span>
-                        <span class="collection-content">
+                        <span class="bundle-number">01</span>
+                        <span>
                             <strong data-i18n="bundleOne">Video bundle one</strong>
-                            <small data-i18n="demoCollection">Demo collection link</small>
+                            <small data-i18n="demoLink">Demo collection link</small>
                         </span>
-                        <span class="collection-arrow" aria-hidden="true">↗</span>
+                        <b aria-hidden="true">&nearr;</b>
                     </a>
 
                     <a
@@ -461,12 +423,12 @@
                         target="_blank"
                         rel="noopener noreferrer nofollow"
                     >
-                        <span class="collection-index">02</span>
-                        <span class="collection-content">
+                        <span class="bundle-number">02</span>
+                        <span>
                             <strong data-i18n="bundleTwo">Video bundle two</strong>
-                            <small data-i18n="demoCollection">Demo collection link</small>
+                            <small data-i18n="demoLink">Demo collection link</small>
                         </span>
-                        <span class="collection-arrow" aria-hidden="true">↗</span>
+                        <b aria-hidden="true">&nearr;</b>
                     </a>
 
                     <a
@@ -475,12 +437,12 @@
                         target="_blank"
                         rel="noopener noreferrer nofollow"
                     >
-                        <span class="collection-index">03</span>
-                        <span class="collection-content">
+                        <span class="bundle-number">03</span>
+                        <span>
                             <strong data-i18n="bundleThree">Video bundle three</strong>
-                            <small data-i18n="demoCollection">Demo collection link</small>
+                            <small data-i18n="demoLink">Demo collection link</small>
                         </span>
-                        <span class="collection-arrow" aria-hidden="true">↗</span>
+                        <b aria-hidden="true">&nearr;</b>
                     </a>
 
                     <a
@@ -489,12 +451,12 @@
                         target="_blank"
                         rel="noopener noreferrer nofollow"
                     >
-                        <span class="collection-index">04</span>
-                        <span class="collection-content">
+                        <span class="bundle-number">04</span>
+                        <span>
                             <strong data-i18n="bundleFour">Video bundle four</strong>
-                            <small data-i18n="demoCollection">Demo collection link</small>
+                            <small data-i18n="demoLink">Demo collection link</small>
                         </span>
-                        <span class="collection-arrow" aria-hidden="true">↗</span>
+                        <b aria-hidden="true">&nearr;</b>
                     </a>
 
                     <a
@@ -503,12 +465,12 @@
                         target="_blank"
                         rel="noopener noreferrer nofollow"
                     >
-                        <span class="collection-index">05</span>
-                        <span class="collection-content">
+                        <span class="bundle-number">05</span>
+                        <span>
                             <strong data-i18n="bundleFive">Video bundle five</strong>
-                            <small data-i18n="demoCollection">Demo collection link</small>
+                            <small data-i18n="demoLink">Demo collection link</small>
                         </span>
-                        <span class="collection-arrow" aria-hidden="true">↗</span>
+                        <b aria-hidden="true">&nearr;</b>
                     </a>
 
                     <a
@@ -517,36 +479,36 @@
                         target="_blank"
                         rel="noopener noreferrer nofollow"
                     >
-                        <span class="collection-index">06</span>
-                        <span class="collection-content">
+                        <span class="bundle-number">06</span>
+                        <span>
                             <strong data-i18n="bundleSix">Video bundle six</strong>
-                            <small data-i18n="demoCollection">Demo collection link</small>
+                            <small data-i18n="demoLink">Demo collection link</small>
                         </span>
-                        <span class="collection-arrow" aria-hidden="true">↗</span>
+                        <b aria-hidden="true">&nearr;</b>
                     </a>
                 </nav>
             </div>
         </section>
 
-        <section class="app-section">
-            <div class="page-container">
+        <section class="section app-section">
+            <div class="container">
                 <div class="app-panel">
-                    <div class="app-copy">
-                        <span class="section-kicker" data-i18n="officialApp">
+                    <div class="app-content">
+                        <span class="app-kicker" data-i18n="appKicker">
                             OFFICIAL TERABOX APPLICATION
                         </span>
 
-                        <h2 data-i18n="appHeading">
+                        <h2 data-i18n="appTitle">
                             Get the TeraBox app from Google Play
                         </h2>
 
-                        <p data-i18n="appDescription">
+                        <p data-i18n="appText">
                             Install the official TeraBox application before
                             opening supported collection links.
                         </p>
 
                         <a
-                            class="play-store-button"
+                            class="store-button"
                             href="https://play.google.com/store/apps/details?id=com.dubox.drive"
                             target="_blank"
                             rel="noopener noreferrer nofollow"
@@ -555,19 +517,19 @@
                                 <small data-i18n="getItOn">GET IT ON</small>
                                 <strong>Google Play</strong>
                             </span>
-                            <span class="store-arrow" aria-hidden="true">↗</span>
+                            <b aria-hidden="true">&nearr;</b>
                         </a>
                     </div>
 
-                    <div class="app-artwork" aria-hidden="true">
-                        <div class="app-orbit app-orbit-one"></div>
-                        <div class="app-orbit app-orbit-two"></div>
+                    <div class="app-visual">
+                        <span class="orbit orbit-one" aria-hidden="true"></span>
+                        <span class="orbit orbit-two" aria-hidden="true"></span>
 
-                        <div class="app-logo-frame">
+                        <div class="app-logo">
                             <img
-                                src="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/logo.png"
-                                width="260"
-                                height="260"
+                                src="./public/images/logo.png"
+                                width="280"
+                                height="280"
                                 alt=""
                                 loading="lazy"
                             >
@@ -577,19 +539,16 @@
             </div>
         </section>
 
-        <section class="instructions-section" id="instructions">
-            <div class="page-container">
-                <div class="section-introduction">
-                    <span class="section-kicker" data-i18n="guideKicker">
-                        QUICK ACCESS GUIDE
-                    </span>
+        <section class="section guide" id="guide">
+            <div class="container">
+                <header class="section-header">
+                    <span data-i18n="guideKicker">QUICK ACCESS GUIDE</span>
+                    <h2 data-i18n="guideTitle">How to use this directory</h2>
+                </header>
 
-                    <h2 data-i18n="guideHeading">How to use this directory</h2>
-                </div>
-
-                <ol class="steps-grid">
+                <ol class="steps">
                     <li>
-                        <span class="step-number">1</span>
+                        <span>1</span>
                         <div>
                             <h3 data-i18n="stepOneTitle">Confirm your age</h3>
                             <p data-i18n="stepOneText">
@@ -599,7 +558,7 @@
                     </li>
 
                     <li>
-                        <span class="step-number">2</span>
+                        <span>2</span>
                         <div>
                             <h3 data-i18n="stepTwoTitle">Choose a language</h3>
                             <p data-i18n="stepTwoText">
@@ -609,7 +568,7 @@
                     </li>
 
                     <li>
-                        <span class="step-number">3</span>
+                        <span>3</span>
                         <div>
                             <h3 data-i18n="stepThreeTitle">Install TeraBox</h3>
                             <p data-i18n="stepThreeText">
@@ -619,11 +578,11 @@
                     </li>
 
                     <li>
-                        <span class="step-number">4</span>
+                        <span>4</span>
                         <div>
                             <h3 data-i18n="stepFourTitle">Open a collection</h3>
                             <p data-i18n="stepFourText">
-                                Select a verified bundle link and review its destination.
+                                Select a verified bundle and review its destination.
                             </p>
                         </div>
                     </li>
@@ -631,14 +590,13 @@
             </div>
         </section>
 
-        <section class="notice-section">
-            <div class="page-container">
-                <div class="responsibility-notice">
-                    <span class="notice-symbol" aria-hidden="true">!</span>
+        <section class="notice">
+            <div class="container">
+                <div class="notice-panel">
+                    <span class="notice-icon" aria-hidden="true">!</span>
 
                     <div>
-                        <h2 data-i18n="noticeHeading">Important notice</h2>
-
+                        <h2 data-i18n="noticeTitle">Important notice</h2>
                         <p data-i18n="noticeText">
                             This website is an independent external-link directory
                             and is not affiliated with TeraBox. Verify the legality,
@@ -651,20 +609,20 @@
         </section>
     </main>
 
-    <footer class="site-footer" id="site-footer">
-        <div class="page-container footer-layout">
+    <footer class="site-footer">
+        <div class="container footer-layout">
             <div class="footer-brand">
                 <img
-                    src="https://raw.githubusercontent.com/wal-katha/wal-katha.github.io/main/public/images/logo.png"
-                    width="80"
-                    height="80"
+                    src="./public/images/logo.png"
+                    width="72"
+                    height="72"
                     alt="TeraBox Video Hub logo"
                     loading="lazy"
                 >
 
                 <div>
                     <strong>TeraBox Video Hub</strong>
-                    <p data-i18n="footerDescription">
+                    <p data-i18n="footerText">
                         An independent 18+ external-link directory.
                     </p>
                 </div>
@@ -673,20 +631,20 @@
             <nav class="footer-navigation" aria-label="Footer navigation">
                 <a href="#home" data-i18n="navHome">Home</a>
                 <a href="#collections" data-i18n="navCollections">Collections</a>
-                <a href="#instructions" data-i18n="navGuide">Access guide</a>
-                <a href="/sitemap.xml">Sitemap</a>
-                <a href="/robots.txt">Robots</a>
+                <a href="#features" data-i18n="navFeatures">Features</a>
+                <a href="#guide" data-i18n="navGuide">Access guide</a>
+                <a href="./sitemap.xml">Sitemap</a>
+                <a href="./robots.txt">Robots</a>
             </nav>
 
             <div class="footer-bottom">
                 <p>
-                    © <span id="current-year">2026</span>
-                    TeraBox Video Hub.
-                    <span data-i18n="rightsText">All rights reserved.</span>
+                    &copy; <span id="current-year">2026</span> TeraBox Video Hub.
+                    <span data-i18n="rights">All rights reserved.</span>
                 </p>
 
-                <button id="footer-language-button" type="button">
-                    <span aria-hidden="true">文</span>
+                <button id="footer-language" type="button">
+                    <span aria-hidden="true">A</span>
                     <span data-i18n="changeLanguage">Change language</span>
                 </button>
             </div>
@@ -699,6 +657,6 @@
         </div>
     </noscript>
 
-    <script src="/app.js" defer></script>
+    <script src="./app.js?v=20260926-2" defer></script>
 </body>
 </html>
