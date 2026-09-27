@@ -68,7 +68,9 @@ jobs:
               parser.close()
 
               if "</html>" not in content.lower():
-                  raise SystemExit(f"{filename} is incomplete: missing </html>")
+                  raise SystemExit(
+                      f"{filename} is incomplete: missing </html>"
+                  )
 
           css = Path("styles.css").read_text(encoding="utf-8")
 
@@ -76,18 +78,26 @@ jobs:
               raise SystemExit("styles.css is incomplete")
 
           if css.count("{") != css.count("}"):
-              raise SystemExit("styles.css contains unmatched braces")
+              raise SystemExit(
+                  "styles.css contains unmatched braces"
+              )
 
           javascript = Path("app.js").read_text(encoding="utf-8")
 
           if "/* APP_SCRIPT_COMPLETE */" not in javascript:
               raise SystemExit("app.js is incomplete")
 
-          with Path("manifest.webmanifest").open(encoding="utf-8") as file:
+          with Path("manifest.webmanifest").open(
+              encoding="utf-8"
+          ) as file:
               json.load(file)
 
           ET.parse("sitemap.xml")
-          print("HTML, CSS, JavaScript, JSON and XML validation passed.")
+
+          print(
+              "HTML, CSS, JavaScript, JSON and XML "
+              "validation passed."
+          )
           PY
 
           node --check app.js
@@ -110,16 +120,30 @@ jobs:
           cp ads.txt _site/ads.txt
           cp .nojekyll _site/.nojekyll
 
-          cp public/images/logo.png _site/public/images/logo.png
-          cp public/images/banner.jpg _site/public/images/banner.jpg
-          cp public/images/favicon.png _site/public/images/favicon.png
+          cp public/images/logo.png \
+             _site/public/images/logo.png
+
+          cp public/images/banner.jpg \
+             _site/public/images/banner.jpg
+
+          cp public/images/favicon.png \
+             _site/public/images/favicon.png
 
           cmp index.html _site/index.html
           cmp styles.css _site/styles.css
           cmp app.js _site/app.js
-          cmp public/images/logo.png _site/public/images/logo.png
-          cmp public/images/banner.jpg _site/public/images/banner.jpg
-          cmp public/images/favicon.png _site/public/images/favicon.png
+
+          cmp \
+            public/images/logo.png \
+            _site/public/images/logo.png
+
+          cmp \
+            public/images/banner.jpg \
+            _site/public/images/banner.jpg
+
+          cmp \
+            public/images/favicon.png \
+            _site/public/images/favicon.png
 
           echo "Deployment directory prepared successfully."
           find _site -maxdepth 3 -type f -print
