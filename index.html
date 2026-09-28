@@ -156,6 +156,7 @@
                     fetchpriority="high"
                     decoding="async"
                 >
+
                 <span class="preview-shade" aria-hidden="true"></span>
 
                 <span class="play-button" aria-hidden="true">
@@ -221,7 +222,7 @@
         >
             Ratings, counts, availability and promotional labels shown on
             this page are publisher-supplied information and are not presented
-            as an independently audited consumer-review score.
+            as independently audited consumer-review data.
         </aside>
 
         <section
@@ -252,6 +253,7 @@
                     aria-disabled="true"
                     data-bundle="1"
                 >
+                    <span class="live-dot" aria-hidden="true"></span>
                     <span class="bundle-icon" aria-hidden="true">01</span>
                     <span class="bundle-copy">
                         <strong>VIEW BUNDLE 1</strong>
@@ -264,6 +266,7 @@
                     aria-disabled="true"
                     data-bundle="2"
                 >
+                    <span class="live-dot" aria-hidden="true"></span>
                     <span class="bundle-icon" aria-hidden="true">02</span>
                     <span class="bundle-copy">
                         <strong>VIEW BUNDLE 2</strong>
@@ -276,6 +279,7 @@
                     aria-disabled="true"
                     data-bundle="3"
                 >
+                    <span class="live-dot" aria-hidden="true"></span>
                     <span class="bundle-icon" aria-hidden="true">03</span>
                     <span class="bundle-copy">
                         <strong>VIEW BUNDLE 3</strong>
@@ -288,6 +292,7 @@
                     aria-disabled="true"
                     data-bundle="4"
                 >
+                    <span class="live-dot" aria-hidden="true"></span>
                     <span class="bundle-icon" aria-hidden="true">04</span>
                     <span class="bundle-copy">
                         <strong>VIEW BUNDLE 4</strong>
@@ -300,6 +305,7 @@
                     aria-disabled="true"
                     data-bundle="5"
                 >
+                    <span class="live-dot" aria-hidden="true"></span>
                     <span class="bundle-icon" aria-hidden="true">05</span>
                     <span class="bundle-copy">
                         <strong>VIEW BUNDLE 5</strong>
@@ -312,9 +318,62 @@
                     aria-disabled="true"
                     data-bundle="6"
                 >
+                    <span class="live-dot" aria-hidden="true"></span>
                     <span class="bundle-icon" aria-hidden="true">06</span>
                     <span class="bundle-copy">
                         <strong>VIEW BUNDLE 6</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
+
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="7"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">07</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 7</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
+
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="8"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">08</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 8</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
+
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="9"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">09</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 9</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
+
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="10"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">10</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 10</strong>
                         <small>TERABOX COLLECTION</small>
                     </span>
                 </a>
@@ -344,14 +403,16 @@
                     app store.
                 </li>
                 <li>
+                    Create or sign in to your TeraBox account.
+                </li>
+                <li>
                     Return to this website and select an available bundle.
                 </li>
                 <li>
-                    Review the destination before opening or downloading any
-                    file.
+                    Allow time for large video collections to load.
                 </li>
                 <li>
-                    Access only content you are legally permitted to use.
+                    Save or download only content you are permitted to use.
                 </li>
             </ol>
         </section>
@@ -426,9 +487,228 @@
         </footer>
     </main>
 
+    <button
+        class="help-launcher"
+        id="help-launcher"
+        type="button"
+        aria-haspopup="dialog"
+        aria-controls="access-guide-dialog"
+        aria-label="Open the video access guide"
+    >
+        <span class="help-launcher-pulse" aria-hidden="true"></span>
+
+        <span class="help-launcher-icon" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+
+        <span class="help-launcher-label">
+            How to watch
+        </span>
+
+        <span class="help-notification" aria-hidden="true">1</span>
+    </button>
+
+    <dialog
+        class="access-dialog"
+        id="access-guide-dialog"
+        aria-labelledby="access-dialog-title"
+        aria-describedby="access-dialog-introduction"
+    >
+        <div class="access-dialog-panel">
+            <header class="access-dialog-header">
+                <div class="access-dialog-heading">
+                    <span
+                        class="access-dialog-logo"
+                        aria-hidden="true"
+                    >
+                        <img
+                            src="/public/images/logo.png"
+                            width="58"
+                            height="58"
+                            alt=""
+                        >
+                    </span>
+
+                    <div>
+                        <span class="access-dialog-eyebrow">
+                            QUICK START GUIDE
+                        </span>
+                        <h2 id="access-dialog-title">
+                            How to watch the videos
+                        </h2>
+                    </div>
+                </div>
+
+                <button
+                    class="access-dialog-close"
+                    id="access-dialog-close"
+                    type="button"
+                    aria-label="Close the video access guide"
+                >
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+
+            <div class="access-dialog-body">
+                <p
+                    class="access-dialog-introduction"
+                    id="access-dialog-introduction"
+                >
+                    Follow these steps to open a bundle, allow the collection
+                    to load and save or download permitted videos through
+                    TeraBox.
+                </p>
+
+                <ol class="access-steps">
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            1
+                        </span>
+
+                        <div>
+                            <h3>Download the official TeraBox app</h3>
+                            <p>
+                                Install TeraBox from a trusted official app
+                                store before opening a video bundle.
+                            </p>
+
+                            <a
+                                class="dialog-download-button"
+                                href="https://play.google.com/store/apps/details?id=com.dubox.drive"
+                                target="_blank"
+                                rel="noopener noreferrer external"
+                            >
+                                <span aria-hidden="true">↓</span>
+                                Download TeraBox
+                                <span aria-hidden="true">↗</span>
+                            </a>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            2
+                        </span>
+
+                        <div>
+                            <h3>Create your account</h3>
+                            <p>
+                                Open the TeraBox app and create an account
+                                using your email address, or sign in if you
+                                already have an account.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            3
+                        </span>
+
+                        <div>
+                            <h3>Check your available storage</h3>
+                            <p>
+                                TeraBox currently advertises up to 1,024 GB
+                                (1 TB) of free cloud storage for free users.
+                                The storage, features and eligibility shown in
+                                your app may vary by account, region and the
+                                current TeraBox terms.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            4
+                        </span>
+
+                        <div>
+                            <h3>Select a bundle</h3>
+                            <p>
+                                Return to this website and select any available
+                                bundle button. The link will open the external
+                                TeraBox destination in a new tab.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            5
+                        </span>
+
+                        <div>
+                            <h3>Continue in TeraBox</h3>
+                            <p>
+                                If the TeraBox app is installed and your device
+                                supports app links, the destination may open in
+                                the app automatically. Otherwise, follow the
+                                browser prompt to continue in TeraBox.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            6
+                        </span>
+
+                        <div>
+                            <h3>Wait for the collection to load</h3>
+                            <p>
+                                A collection containing 500+ videos may take
+                                some time to load. Loading speed depends on
+                                your connection, device and the TeraBox
+                                service.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            7
+                        </span>
+
+                        <div>
+                            <h3>Save or download permitted videos</h3>
+                            <p>
+                                After the collection loads, use the options
+                                provided by TeraBox to save permitted videos
+                                to your account or download them when the
+                                uploader, platform and applicable law allow it.
+                            </p>
+                        </div>
+                    </li>
+                </ol>
+
+                <aside class="access-safety-notice">
+                    <strong>Important:</strong>
+                    Review the destination before opening a file. Do not save,
+                    download or share illegal, infringing, non-consensual or
+                    underage material. Never enter your password anywhere
+                    except the verified TeraBox app or official TeraBox
+                    website.
+                </aside>
+            </div>
+
+            <footer class="access-dialog-footer">
+                <button
+                    class="access-dialog-done"
+                    id="access-dialog-done"
+                    type="button"
+                >
+                    Got it — show bundles
+                </button>
+            </footer>
+        </div>
+    </dialog>
+
     <noscript>
         <div class="noscript-message">
-            JavaScript is disabled. Bundle availability cannot be checked.
+            JavaScript is disabled. Bundle availability and the interactive
+            access guide cannot be displayed.
         </div>
     </noscript>
 
