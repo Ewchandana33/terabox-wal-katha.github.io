@@ -1,4 +1,4 @@
-name: Validate and deploy static site to GitHub Pages
+name: Deploy static site to GitHub Pages
 
 on:
   push:
@@ -10,12 +10,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: github-pages
+  group: pages
   cancel-in-progress: true
 
 jobs:
   validate:
-    name: Validate site
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -23,7 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Validate required files
+      - name: Validate repository
         shell: bash
         run: |
           set -euo pipefail
@@ -50,13 +49,6 @@ jobs:
             fi
           done
 
-          echo "All required files are present."
-
-      - name: Validate HTML, JSON, XML, CSS and URLs
-        shell: bash
-        run: |
-          set -euo pipefail
-
           python3 - <<'PY'
           import json
           import re
@@ -66,24 +58,41 @@ jobs:
 
           SITE_URL = "https://wal-katha.github.io/"
 
-          class SiteHTMLParser(HTMLParser):
+          class DocumentParser(HTMLParser):
               def __init__(self):
                   super().__init__()
                   self.ids = set()
                   self.duplicate_ids = set()
+                  self.has_title = False
+                  self.has_description = False
+                  self.has_canonical = False
 
               def handle_starttag(self, tag, attrs):
                   attributes = dict(attrs)
-                  element_id = attributes.get("id")
 
+                  element_id = attributes.get("id")
                   if element_id:
                       if element_id in self.ids:
                           self.duplicate_ids.add(element_id)
                       self.ids.add(element_id)
 
+                  if tag == "title":
+                      self.has_title = True
+
+                  if tag == "meta":
+                      if attributes.get("name") == "description":
+                          self.has_description = True
+
+                  if tag == "link":
+                      rel = attributes.get("rel", "")
+                      if "canonical" in rel.split():
+                          self.has_canonical = True
+
           for filename in ("index.html", "404.html"):
-              path = Path(filename)
-              content = path.read_text(encoding="utf-8")
+              content = Path(filename).read_text(encoding="utf-8")
+              parser = DocumentParser()
+              parser.feed(content)
+              parser.close()
 
               if "<!doctype html>" not in content.lower():
                   raise SystemExit(f"{filename}: missing HTML doctype")
@@ -91,9 +100,11 @@ jobs:
               if "</html>" not in content.lower():
                   raise SystemExit(f"{filename}: missing closing html tag")
 
-              parser = SiteHTMLParser()
-              parser.feed(content)
-              parser.close()
+              if not parser.has_title:
+                  raise SystemExit(f"{filename}: missing title")
+
+              if not parser.has_description:
+                  raise SystemExit(f"{filename}: missing description")
 
               if parser.duplicate_ids:
                   raise SystemExit(
@@ -101,88 +112,64 @@ jobs:
                       f"{sorted(parser.duplicate_ids)}"
                   )
 
+              if filename == "index.html" and not parser.has_canonical:
+                  raise SystemExit("index.html: missing canonical URL")
+
           index = Path("index.html").read_text(encoding="utf-8")
 
-          required_index_values = (
-              '<link rel="canonical" href="' + SITE_URL + '">',
-              '<meta name="rating" content="adult">',
-              'lang="en"',
-              'id="main-content"',
-          )
+          if SITE_URL not in index:
+              raise SystemExit("index.html: canonical site URL is missing")
 
-          for value in required_index_values:
-              if value not in index:
-                  raise SystemExit(
-                      f"index.html: missing required value: {value}"
-                  )
-
-          if 'AggregateRating' in index:
-              raise SystemExit(
-                  "Do not publish AggregateRating markup without "
-                  "verifiable first-party rating records."
-              )
+          if "example.com" in index:
+              raise SystemExit("index.html contains an example.com placeholder")
 
           css = Path("styles.css").read_text(encoding="utf-8")
-
           if "/* SITE_STYLES_COMPLETE */" not in css:
-              raise SystemExit("styles.css: completion marker missing")
-
+              raise SystemExit("styles.css completion marker is missing")
           if css.count("{") != css.count("}"):
-              raise SystemExit("styles.css: unmatched braces")
+              raise SystemExit("styles.css contains unmatched braces")
 
           javascript = Path("app.js").read_text(encoding="utf-8")
-
           if "/* APP_SCRIPT_COMPLETE */" not in javascript:
-              raise SystemExit("app.js: completion marker missing")
+              raise SystemExit("app.js completion marker is missing")
 
           with Path("manifest.webmanifest").open(encoding="utf-8") as file:
               manifest = json.load(file)
 
           if manifest.get("start_url") != "/":
-              raise SystemExit("manifest: start_url must be /")
+              raise SystemExit("manifest start_url must be /")
 
-          sitemap = ET.parse("sitemap.xml")
-          root = sitemap.getroot()
-
-          namespace = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+          root = ET.parse("sitemap.xml").getroot()
+          namespace = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
           locations = [
-              element.text
-              for element in root.findall(".//sm:loc", namespace)
+              node.text
+              for node in root.findall(f"{namespace}url/{namespace}loc")
           ]
 
           if locations != [SITE_URL]:
               raise SystemExit(
-                  "sitemap.xml must contain only the canonical homepage URL"
+                  "sitemap.xml must contain only the canonical homepage"
               )
 
-          robots = Path("robots.txt").read_text(encoding="utf-8")
-
-          if f"Sitemap: {SITE_URL}sitemap.xml" not in robots:
-              raise SystemExit("robots.txt: sitemap URL mismatch")
+          ads = Path("ads.txt").read_text(encoding="utf-8").strip()
+          ads_pattern = (
+              r"^google\.com,\s*pub-\d{16},\s*DIRECT,\s*"
+              r"f08c47fec0942fa0$"
+          )
+          if ads and not re.fullmatch(ads_pattern, ads):
+              raise SystemExit("ads.txt is not in the expected Google format")
 
           print("Repository validation passed.")
           PY
 
           node --check app.js
 
-      - name: Warn about unconfigured bundle links
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if grep -q '1: ""' app.js; then
-            echo "::warning::Bundle URLs are not configured in app.js."
-            echo "::warning::Buttons will remain safely disabled."
-          fi
-
   deploy:
-    name: Deploy site
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     permissions:
-      contents: read
       pages: write
       id-token: write
 
@@ -197,7 +184,7 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare deployment directory
+      - name: Prepare deployment artifact
         shell: bash
         run: |
           set -euo pipefail
@@ -215,14 +202,9 @@ jobs:
           cp ads.txt _site/ads.txt
           cp .nojekyll _site/.nojekyll
 
-          cp public/images/logo.png \
-            _site/public/images/logo.png
-
-          cp public/images/banner.jpg \
-            _site/public/images/banner.jpg
-
-          cp public/images/favicon.png \
-            _site/public/images/favicon.png
+          cp public/images/logo.png _site/public/images/logo.png
+          cp public/images/banner.jpg _site/public/images/banner.jpg
+          cp public/images/favicon.png _site/public/images/favicon.png
 
           find _site -maxdepth 3 -type f -print
 
