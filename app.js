@@ -1,28 +1,85 @@
 "use strict";
 
 /*
- * Publish only links that you are legally authorized to share.
- *
- * Bundles 1-10 are the primary links supplied by the site operator.
- * Bundles 11-20 are loaded from /more-bundles.json.
+ * Publish only links that you are legally authorised to share.
+ * All destinations must use HTTPS.
  */
+
 const BUNDLE_LINKS = Object.freeze({
-    1: "https://1024terabox.com/s/1Uvm-lbRlZwIuLjWRaffprg",
-    2: "https://1024terabox.com/s/1sJbqyVgz5GcW6kmvWWG9Yg",
-    3: "https://1024terabox.com/s/1EjY0eZkY2JFDyJpKihZcIw",
+    1: "https://1024terabox.com/s/1ZIc39rpZ067AuHdll_2WLA",
+    2: "https://1024terabox.com/s/1Uvm-lbRlZwIuLjWRaffprg",
+    3: "https://1024terabox.com/s/1H_VXYWAC-qZt3qx2Nw6uKA",
     4: "https://1024terabox.com/s/11dfl5OFqPgac7tBoUsjnzQ",
-    5: "https://1024terabox.com/s/1A-oWGLIvH90DPWyqGAY1Jw",
-    6: "https://1024terabox.com/s/1ZIc39rpZ067AuHdll_2WLA",
-    7: "https://1024terabox.com/s/13JMO9tr6W1vGDH4DCAIkPg",
-    8: "https://1024terabox.com/s/1KxskEvHhaMfLyA-OOgBdHQ",
-    9: "https://1024terabox.com/s/1H_VXYWAC-qZt3qx2Nw6uKA",
-    10: "https://1024terabox.com/s/1oKaOWVfDkMkrigERpURgUg"
+    5: "https://1024terabox.com/s/1KxskEvHhaMfLyA-OOgBdHQ",
+    6: "https://1024terabox.com/s/1A-oWGLIvH90DPWyqGAY1Jw",
+    7: "https://1024terabox.com/s/1oKaOWVfDkMkrigERpURgUg",
+    8: "https://1024terabox.com/s/1EjY0eZkY2JFDyJpKihZcIw",
+    9: "https://1024terabox.com/s/13JMO9tr6W1vGDH4DCAIkPg",
+    10: "https://1024terabox.com/s/1sJbqyVgz5GcW6kmvWWG9Yg"
 });
 
-const MORE_BUNDLES_URL = "/more-bundles.json";
-const PRIMARY_BUNDLE_COUNT = 10;
-const EXTRA_BUNDLE_START = 11;
-const EXTRA_BUNDLE_END = 20;
+/*
+ * Replace these placeholder URLs with authorised HTTPS links later.
+ *
+ * Example:
+ * {
+ *     id: 11,
+ *     url: "https://1024terabox.com/s/your-real-link",
+ *     demo: false
+ * }
+ */
+const EXTRA_BUNDLE_LINKS = Object.freeze([
+    Object.freeze({
+        id: 11,
+        url: "https://example.com/?demo-bundle=11",
+        demo: true
+    }),
+    Object.freeze({
+        id: 12,
+        url: "https://example.com/?demo-bundle=12",
+        demo: true
+    }),
+    Object.freeze({
+        id: 13,
+        url: "https://example.com/?demo-bundle=13",
+        demo: true
+    }),
+    Object.freeze({
+        id: 14,
+        url: "https://example.com/?demo-bundle=14",
+        demo: true
+    }),
+    Object.freeze({
+        id: 15,
+        url: "https://example.com/?demo-bundle=15",
+        demo: true
+    }),
+    Object.freeze({
+        id: 16,
+        url: "https://example.com/?demo-bundle=16",
+        demo: true
+    }),
+    Object.freeze({
+        id: 17,
+        url: "https://example.com/?demo-bundle=17",
+        demo: true
+    }),
+    Object.freeze({
+        id: 18,
+        url: "https://example.com/?demo-bundle=18",
+        demo: true
+    }),
+    Object.freeze({
+        id: 19,
+        url: "https://example.com/?demo-bundle=19",
+        demo: true
+    }),
+    Object.freeze({
+        id: 20,
+        url: "https://example.com/?demo-bundle=20",
+        demo: true
+    })
+]);
 
 function getValidatedHttpsUrl(value) {
     if (typeof value !== "string") {
@@ -38,12 +95,7 @@ function getValidatedHttpsUrl(value) {
     try {
         const url = new URL(normalizedValue);
 
-        if (
-            url.protocol !== "https:"
-            || !url.hostname
-            || url.username
-            || url.password
-        ) {
+        if (url.protocol !== "https:" || !url.hostname) {
             return null;
         }
 
@@ -53,12 +105,7 @@ function getValidatedHttpsUrl(value) {
     }
 }
 
-function enableBundle(
-    link,
-    destination,
-    bundleNumber,
-    subtitle = "TERABOX COLLECTION"
-) {
+function enableBundle(link, destination, bundleNumber) {
     const description = link.querySelector("small");
 
     link.href = destination;
@@ -74,7 +121,7 @@ function enableBundle(
     );
 
     if (description) {
-        description.textContent = subtitle;
+        description.textContent = "TERABOX COLLECTION";
     }
 }
 
@@ -87,6 +134,7 @@ function keepBundleUnavailable(link, bundleNumber) {
 
     link.classList.add("is-disabled");
     link.setAttribute("aria-disabled", "true");
+
     link.setAttribute(
         "aria-label",
         `TeraBox bundle ${bundleNumber} is currently unavailable`
@@ -99,7 +147,7 @@ function keepBundleUnavailable(link, bundleNumber) {
 
 function configurePrimaryBundleLinks() {
     const links = document.querySelectorAll(
-        "[data-bundle]:not([data-extra-bundle])"
+        ".bundle-grid [data-bundle]"
     );
 
     const status = document.getElementById("bundle-status");
@@ -111,13 +159,7 @@ function configurePrimaryBundleLinks() {
         const destination = getValidatedHttpsUrl(configuredValue);
 
         if (destination) {
-            enableBundle(
-                link,
-                destination,
-                bundleNumber,
-                "TERABOX COLLECTION"
-            );
-
+            enableBundle(link, destination, bundleNumber);
             availableCount += 1;
             return;
         }
@@ -143,340 +185,220 @@ function configurePrimaryBundleLinks() {
     status.classList.remove("is-unavailable");
 }
 
-function createElement(tagName, className, textContent) {
-    const element = document.createElement(tagName);
-
-    if (className) {
-        element.className = className;
-    }
-
-    if (typeof textContent === "string") {
-        element.textContent = textContent;
-    }
-
-    return element;
-}
-
 function createExtraBundleElement(bundle) {
-    const link = createElement(
-        "a",
-        "bundle-button is-disabled"
-    );
+    const destination = getValidatedHttpsUrl(bundle.url);
+    const link = document.createElement("a");
+    const liveDot = document.createElement("span");
+    const icon = document.createElement("span");
+    const copy = document.createElement("span");
+    const title = document.createElement("strong");
+    const description = document.createElement("small");
 
-    link.dataset.bundle = String(bundle.id);
-    link.dataset.extraBundle = "true";
-    link.setAttribute("aria-disabled", "true");
+    link.className = "bundle-button extra-bundle-button";
+    link.dataset.extraBundle = String(bundle.id);
 
-    const liveDot = createElement("span", "live-dot");
+    liveDot.className = "live-dot";
     liveDot.setAttribute("aria-hidden", "true");
 
-    const icon = createElement(
-        "span",
-        "bundle-icon",
-        String(bundle.id).padStart(2, "0")
-    );
-
+    icon.className = "bundle-icon";
     icon.setAttribute("aria-hidden", "true");
+    icon.textContent = String(bundle.id).padStart(2, "0");
 
-    const copy = createElement("span", "bundle-copy");
+    copy.className = "bundle-copy";
 
-    const title = createElement(
-        "strong",
-        "",
-        bundle.title || `VIEW BUNDLE ${bundle.id}`
-    );
+    title.textContent = `VIEW BUNDLE ${bundle.id}`;
 
-    const subtitle = createElement(
-        "small",
-        "",
-        bundle.subtitle || "TERABOX COLLECTION"
-    );
+    description.textContent = bundle.demo
+        ? "DEMO PLACEHOLDER"
+        : "TERABOX COLLECTION";
 
-    copy.append(title, subtitle);
+    copy.append(title, description);
     link.append(liveDot, icon, copy);
 
-    const destination = getValidatedHttpsUrl(bundle.url);
-
-    if (destination) {
-        enableBundle(
-            link,
-            destination,
-            bundle.id,
-            bundle.subtitle || "TERABOX COLLECTION"
-        );
-    } else {
+    if (!destination) {
         keepBundleUnavailable(link, bundle.id);
+        return link;
+    }
+
+    link.href = destination;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer external nofollow";
+
+    link.setAttribute(
+        "aria-label",
+        bundle.demo
+            ? `Open demo placeholder for bundle ${bundle.id} in a new tab`
+            : `Open TeraBox bundle ${bundle.id} in a new tab`
+    );
+
+    if (bundle.demo) {
+        link.classList.add("is-demo");
     }
 
     return link;
 }
 
-function validateMoreBundles(data) {
-    if (!Array.isArray(data)) {
-        throw new TypeError(
-            "The additional bundle file must contain an array."
-        );
-    }
-
-    const validBundles = [];
-    const usedIds = new Set();
-
-    data.forEach((item) => {
-        if (
-            !item
-            || typeof item !== "object"
-            || !Number.isInteger(item.id)
-            || item.id < EXTRA_BUNDLE_START
-            || item.id > EXTRA_BUNDLE_END
-            || usedIds.has(item.id)
-        ) {
-            return;
-        }
-
-        const destination = getValidatedHttpsUrl(item.url);
-
-        if (!destination) {
-            return;
-        }
-
-        usedIds.add(item.id);
-
-        validBundles.push({
-            id: item.id,
-            title:
-                typeof item.title === "string"
-                    ? item.title.trim()
-                    : `VIEW BUNDLE ${item.id}`,
-            subtitle:
-                typeof item.subtitle === "string"
-                    ? item.subtitle.trim()
-                    : "TERABOX COLLECTION",
-            url: destination,
-            demo: item.demo === true
-        });
-    });
-
-    validBundles.sort((first, second) => {
-        return first.id - second.id;
-    });
-
-    if (validBundles.length === 0) {
-        throw new Error(
-            "No valid additional bundle links were found."
-        );
-    }
-
-    return validBundles;
-}
-
 function createMoreLinksInterface() {
-    const primaryGrid = document.querySelector(
-        ".bundle-section .bundle-grid"
-    );
+    const bundleSection = document.getElementById("bundles");
+    const primaryGrid = bundleSection?.querySelector(".bundle-grid");
 
-    if (
-        !primaryGrid
-        || document.getElementById("more-links-controls")
-    ) {
-        return null;
-    }
-
-    const controls = createElement(
-        "div",
-        "more-links-controls"
-    );
-
-    controls.id = "more-links-controls";
-
-    const moreButton = createElement(
-        "button",
-        "hero-button more-links-button"
-    );
-
-    moreButton.id = "more-links-button";
-    moreButton.type = "button";
-    moreButton.setAttribute("aria-expanded", "false");
-    moreButton.setAttribute(
-        "aria-controls",
-        "additional-bundle-grid"
-    );
-
-    const buttonIcon = createElement(
-        "span",
-        "more-links-button-icon",
-        "+"
-    );
-
-    buttonIcon.setAttribute("aria-hidden", "true");
-
-    const buttonText = createElement(
-        "span",
-        "more-links-button-text",
-        "SHOW MORE LINKS"
-    );
-
-    moreButton.append(buttonIcon, buttonText);
-
-    const loadingStatus = createElement(
-        "p",
-        "bundle-status more-links-status",
-        "Ten more demo links are available."
-    );
-
-    loadingStatus.id = "more-links-status";
-    loadingStatus.setAttribute("role", "status");
-    loadingStatus.setAttribute("aria-live", "polite");
-    loadingStatus.setAttribute("aria-atomic", "true");
-
-    const extraGrid = createElement(
-        "div",
-        "bundle-grid additional-bundle-grid"
-    );
-
-    extraGrid.id = "additional-bundle-grid";
-    extraGrid.setAttribute(
-        "aria-label",
-        "Additional TeraBox video bundle links"
-    );
-
-    extraGrid.hidden = true;
-    extraGrid.style.display = "none";
-
-    controls.append(moreButton, loadingStatus, extraGrid);
-    primaryGrid.insertAdjacentElement("afterend", controls);
-
-    return {
-        controls,
-        moreButton,
-        buttonIcon,
-        buttonText,
-        loadingStatus,
-        extraGrid
-    };
-}
-
-async function loadMoreBundles(interfaceElements) {
-    const {
-        moreButton,
-        buttonIcon,
-        buttonText,
-        loadingStatus,
-        extraGrid
-    } = interfaceElements;
-
-    if (
-        moreButton.dataset.loading === "true"
-        || moreButton.dataset.loaded === "true"
-    ) {
+    if (!bundleSection || !primaryGrid) {
         return;
     }
 
-    moreButton.dataset.loading = "true";
-    moreButton.disabled = true;
-    moreButton.setAttribute("aria-busy", "true");
+    if (document.getElementById("extra-bundles-panel")) {
+        return;
+    }
 
-    buttonIcon.textContent = "…";
-    buttonText.textContent = "LOADING MORE LINKS";
+    const controls = document.createElement("div");
+    const showButton = document.createElement("button");
+    const extraPanel = document.createElement("section");
+    const heading = document.createElement("div");
+    const headingCopy = document.createElement("div");
+    const eyebrow = document.createElement("span");
+    const title = document.createElement("h3");
+    const description = document.createElement("p");
+    const extraGrid = document.createElement("div");
+    const bottomControls = document.createElement("div");
+    const closeButton = document.createElement("button");
 
-    loadingStatus.textContent =
-        "Loading ten additional bundle links…";
+    controls.className = "more-links-controls";
 
-    loadingStatus.classList.remove("is-unavailable");
+    showButton.className = "more-links-button";
+    showButton.id = "show-more-links";
+    showButton.type = "button";
+    showButton.setAttribute("aria-expanded", "false");
+    showButton.setAttribute(
+        "aria-controls",
+        "extra-bundles-panel"
+    );
 
-    try {
-        const response = await fetch(MORE_BUNDLES_URL, {
-            method: "GET",
-            credentials: "same-origin",
-            headers: {
-                Accept: "application/json"
-            }
+    showButton.innerHTML = `
+        <span class="more-links-symbol" aria-hidden="true">＋</span>
+        <span>
+            <strong>SHOW MORE LINKS</strong>
+            <small>OPEN 10 EXTRA BUNDLES</small>
+        </span>
+        <span class="more-links-arrow" aria-hidden="true">⌄</span>
+    `;
+
+    extraPanel.className = "extra-bundles-panel";
+    extraPanel.id = "extra-bundles-panel";
+    extraPanel.hidden = true;
+    extraPanel.setAttribute(
+        "aria-labelledby",
+        "extra-bundles-title"
+    );
+
+    heading.className = "extra-bundles-heading";
+    headingCopy.className = "extra-bundles-heading-copy";
+
+    eyebrow.className = "extra-bundles-eyebrow";
+    eyebrow.textContent = "ADDITIONAL COLLECTION";
+
+    title.id = "extra-bundles-title";
+    title.textContent = "10 EXTRA BUNDLE LINKS";
+
+    description.textContent =
+        "These differently styled buttons are reserved for additional links.";
+
+    headingCopy.append(eyebrow, title, description);
+    heading.append(headingCopy);
+
+    extraGrid.className = "bundle-grid extra-bundle-grid";
+    extraGrid.setAttribute(
+        "aria-label",
+        "Additional video bundle links"
+    );
+
+    EXTRA_BUNDLE_LINKS.forEach((bundle) => {
+        extraGrid.append(createExtraBundleElement(bundle));
+    });
+
+    bottomControls.className = "extra-bundles-bottom-controls";
+
+    closeButton.className = "close-extra-links-button";
+    closeButton.id = "close-extra-links";
+    closeButton.type = "button";
+
+    closeButton.innerHTML = `
+        <span aria-hidden="true">×</span>
+        <span>
+            <strong>CLOSE EXTRA LINKS</strong>
+            <small>HIDE THE ADDITIONAL BUNDLES</small>
+        </span>
+        <span aria-hidden="true">⌃</span>
+    `;
+
+    bottomControls.append(closeButton);
+    extraPanel.append(heading, extraGrid, bottomControls);
+    controls.append(showButton);
+
+    primaryGrid.insertAdjacentElement("afterend", controls);
+    controls.insertAdjacentElement("afterend", extraPanel);
+
+    const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+    );
+
+    function openExtraBundles() {
+        extraPanel.hidden = false;
+        showButton.hidden = true;
+        showButton.setAttribute("aria-expanded", "true");
+
+        window.requestAnimationFrame(() => {
+            extraPanel.classList.add("is-visible");
         });
 
-        if (!response.ok) {
-            throw new Error(
-                `Additional bundle request failed: ${response.status}`
-            );
-        }
-
-        const data = await response.json();
-        const bundles = validateMoreBundles(data);
-        const fragment = document.createDocumentFragment();
-
-        bundles.forEach((bundle) => {
-            fragment.appendChild(
-                createExtraBundleElement(bundle)
-            );
-        });
-
-        extraGrid.replaceChildren(fragment);
-        extraGrid.hidden = false;
-        extraGrid.style.removeProperty("display");
-
-        moreButton.dataset.loaded = "true";
-        moreButton.setAttribute("aria-expanded", "true");
-
-        loadingStatus.textContent =
-            `${bundles.length} additional demo bundle links loaded.`;
-
-        moreButton.remove();
-
-        const firstExtraLink = extraGrid.querySelector(
-            ".bundle-button:not(.is-disabled)"
+        const extraTitle = document.getElementById(
+            "extra-bundles-title"
         );
 
-        if (firstExtraLink instanceof HTMLElement) {
-            firstExtraLink.focus({
+        if (extraTitle) {
+            extraTitle.setAttribute("tabindex", "-1");
+            extraTitle.focus({
+                preventScroll: true
+            });
+        }
+
+        extraPanel.scrollIntoView({
+            behavior: reducedMotion.matches ? "auto" : "smooth",
+            block: "start"
+        });
+    }
+
+    function closeExtraBundles() {
+        extraPanel.classList.remove("is-visible");
+
+        const finishClosing = () => {
+            extraPanel.hidden = true;
+            showButton.hidden = false;
+            showButton.setAttribute("aria-expanded", "false");
+
+            showButton.focus({
                 preventScroll: true
             });
 
-            firstExtraLink.scrollIntoView({
-                behavior: window.matchMedia(
-                    "(prefers-reduced-motion: reduce)"
-                ).matches
-                    ? "auto"
-                    : "smooth",
+            controls.scrollIntoView({
+                behavior: reducedMotion.matches ? "auto" : "smooth",
                 block: "center"
             });
+        };
+
+        if (reducedMotion.matches) {
+            finishClosing();
+            return;
         }
 
-        secureExternalLinks();
-    } catch (error) {
-        console.error("Unable to load more bundles:", error);
-
-        loadingStatus.textContent =
-            "The additional links could not be loaded. Please try again.";
-
-        loadingStatus.classList.add("is-unavailable");
-
-        moreButton.disabled = false;
-        moreButton.removeAttribute("aria-busy");
-
-        buttonIcon.textContent = "↻";
-        buttonText.textContent = "TRY AGAIN";
-    } finally {
-        moreButton.dataset.loading = "false";
-    }
-}
-
-function configureMoreLinks() {
-    const interfaceElements = createMoreLinksInterface();
-
-    if (!interfaceElements) {
-        return;
+        window.setTimeout(finishClosing, 220);
     }
 
-    interfaceElements.moreButton.addEventListener(
-        "click",
-        () => {
-            loadMoreBundles(interfaceElements);
-        }
-    );
+    showButton.addEventListener("click", openExtraBundles);
+    closeButton.addEventListener("click", closeExtraBundles);
 }
 
 function secureExternalLinks() {
-    const links = document.querySelectorAll(
-        'a[target="_blank"]'
-    );
+    const links = document.querySelectorAll('a[target="_blank"]');
 
     links.forEach((link) => {
         const relValues = new Set(
@@ -497,9 +419,7 @@ function secureExternalLinks() {
 }
 
 function updateCopyrightYear() {
-    const yearElement = document.getElementById(
-        "current-year"
-    );
+    const yearElement = document.getElementById("current-year");
 
     if (!yearElement) {
         return;
@@ -512,11 +432,28 @@ function updateCopyrightYear() {
     );
 }
 
-function configureAccessGuide() {
-    const launcher = document.getElementById(
-        "help-launcher"
+function configureDarkBrowserTheme() {
+    const themeColor = document.querySelector(
+        'meta[name="theme-color"]'
     );
 
+    const colorScheme = document.querySelector(
+        'meta[name="color-scheme"]'
+    );
+
+    if (themeColor) {
+        themeColor.setAttribute("content", "#050505");
+    }
+
+    if (colorScheme) {
+        colorScheme.setAttribute("content", "dark");
+    }
+
+    document.documentElement.style.colorScheme = "dark";
+}
+
+function configureAccessGuide() {
+    const launcher = document.getElementById("help-launcher");
     const dialog = document.getElementById(
         "access-guide-dialog"
     );
@@ -530,8 +467,8 @@ function configureAccessGuide() {
     );
 
     if (
-        !(launcher instanceof HTMLButtonElement)
-        || !(dialog instanceof HTMLDialogElement)
+        !(launcher instanceof HTMLButtonElement) ||
+        !(dialog instanceof HTMLDialogElement)
     ) {
         return;
     }
@@ -559,16 +496,11 @@ function configureAccessGuide() {
             scrollToBundles = false
         } = options;
 
-        if (
-            dialog.open
-            && typeof dialog.close === "function"
-        ) {
+        if (dialog.open && typeof dialog.close === "function") {
             dialog.close();
         } else {
             dialog.removeAttribute("open");
-            document.body.classList.remove(
-                "dialog-is-open"
-            );
+            document.body.classList.remove("dialog-is-open");
 
             if (shouldRestoreLauncherFocus) {
                 launcher.focus();
@@ -576,9 +508,7 @@ function configureAccessGuide() {
         }
 
         if (scrollToBundles) {
-            const bundles = document.getElementById(
-                "bundles"
-            );
+            const bundles = document.getElementById("bundles");
 
             if (bundles) {
                 window.setTimeout(() => {
@@ -618,15 +548,11 @@ function configureAccessGuide() {
     });
 
     dialog.addEventListener("cancel", () => {
-        document.body.classList.remove(
-            "dialog-is-open"
-        );
+        document.body.classList.remove("dialog-is-open");
     });
 
     dialog.addEventListener("close", () => {
-        document.body.classList.remove(
-            "dialog-is-open"
-        );
+        document.body.classList.remove("dialog-is-open");
 
         if (shouldRestoreLauncherFocus) {
             launcher.focus({
@@ -639,8 +565,9 @@ function configureAccessGuide() {
 }
 
 function initializeApplication() {
+    configureDarkBrowserTheme();
     configurePrimaryBundleLinks();
-    configureMoreLinks();
+    createMoreLinksInterface();
     secureExternalLinks();
     updateCopyrightYear();
     configureAccessGuide();
