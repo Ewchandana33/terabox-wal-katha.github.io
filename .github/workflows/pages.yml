@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -58,14 +60,23 @@ jobs:
               echo "::error file=${file}::Required file is missing"
               exit 1
             fi
+
+            if [[ "$file" != ".nojekyll" && ! -s "$file" ]]; then
+              echo "::error file=${file}::Required file is empty"
+              exit 1
+            fi
           done
 
           python3 - <<'PY'
           import json
+          import re
+          import struct
           import xml.etree.ElementTree as ET
+          from html.parser import HTMLParser
           from pathlib import Path
+          from urllib.parse import unquote, urlsplit
 
-          html_files = (
+          HTML_FILES = (
               "index.html",
               "404.html",
               "privacy-policy.html",
@@ -77,8 +88,99 @@ jobs:
               "contact.html",
           )
 
-          for filename in html_files:
+          class PageParser(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.ids = set()
+                  self.references = []
+                  self.canonicals = []
+                  self.descriptions = []
+                  self.titles = []
+                  self.json_ld_blocks = []
+                  self._inside_title = False
+                  self._title_parts = []
+                  self._inside_json_ld = False
+                  self._json_ld_parts = []
+
+              def handle_starttag(self, tag, attrs):
+                  attributes = dict(attrs)
+
+                  element_id = attributes.get("id")
+
+                  if element_id:
+                      self.ids.add(element_id)
+
+                  for attribute_name in ("href", "src"):
+                      value = attributes.get(attribute_name)
+
+                      if value:
+                          self.references.append(
+                              (tag, attribute_name, value)
+                          )
+
+                  if tag == "link":
+                      rel_values = set(
+                          attributes.get("rel", "").lower().split()
+                      )
+
+                      if "canonical" in rel_values:
+                          href = attributes.get("href")
+
+                          if href:
+                              self.canonicals.append(href)
+
+                  if (
+                      tag == "meta"
+                      and attributes.get("name", "").lower()
+                      == "description"
+                  ):
+                      self.descriptions.append(
+                          attributes.get("content", "")
+                      )
+
+                  if tag == "title":
+                      self._inside_title = True
+                      self._title_parts = []
+
+                  if (
+                      tag == "script"
+                      and attributes.get("type", "").lower()
+                      == "application/ld+json"
+                  ):
+                      self._inside_json_ld = True
+                      self._json_ld_parts = []
+
+              def handle_endtag(self, tag):
+                  if tag == "title" and self._inside_title:
+                      self.titles.append(
+                          "".join(self._title_parts).strip()
+                      )
+                      self._inside_title = False
+
+                  if tag == "script" and self._inside_json_ld:
+                      self.json_ld_blocks.append(
+                          "".join(self._json_ld_parts).strip()
+                      )
+                      self._inside_json_ld = False
+
+              def handle_data(self, data):
+                  if self._inside_title:
+                      self._title_parts.append(data)
+
+                  if self._inside_json_ld:
+                      self._json_ld_parts.append(data)
+
+          def parse_page(filename):
               content = Path(filename).read_text(encoding="utf-8")
+              parser = PageParser()
+              parser.feed(content)
+              parser.close()
+              return content, parser
+
+          parsed_pages = {}
+
+          for filename in HTML_FILES:
+              content, parser = parse_page(filename)
               lowered = content.lower()
 
               if "<!doctype html>" not in lowered:
@@ -91,24 +193,246 @@ jobs:
                       f"{filename}: missing closing html tag"
                   )
 
-              if "<title>" not in lowered:
+              if len(parser.titles) != 1 or not parser.titles[0]:
                   raise SystemExit(
-                      f"{filename}: missing title"
+                      f"{filename}: must contain one non-empty title"
                   )
 
-              if 'name="description"' not in lowered:
+              if (
+                  len(parser.descriptions) != 1
+                  or not parser.descriptions[0].strip()
+              ):
                   raise SystemExit(
-                      f"{filename}: missing meta description"
+                      f"{filename}: must contain one meta description"
+                  )
+
+              if 'lang="en"' not in lowered:
+                  raise SystemExit(
+                      f"{filename}: missing document language"
+                  )
+
+              if filename == "404.html":
+                  if "noindex" not in lowered:
+                      raise SystemExit(
+                          "404.html: missing noindex directive"
+                      )
+              elif len(parser.canonicals) != 1:
+                  raise SystemExit(
+                      f"{filename}: expected one canonical URL"
+                  )
+
+              for json_ld_block in parser.json_ld_blocks:
+                  json.loads(json_ld_block)
+
+              parsed_pages[filename] = parser
+
+          def resolve_internal_reference(source_file, reference):
+              split = urlsplit(reference)
+
+              if split.scheme or split.netloc:
+                  return None
+
+              if reference.startswith((
+                  "mailto:",
+                  "tel:",
+                  "javascript:",
+                  "data:",
+              )):
+                  return None
+
+              path_value = unquote(split.path)
+
+              if path_value == "":
+                  target = Path(source_file)
+              elif path_value.startswith("/"):
+                  target = Path(
+                      path_value.lstrip("/") or "index.html"
+                  )
+              else:
+                  target = Path(source_file).parent / path_value
+
+              if target.is_dir():
+                  target = target / "index.html"
+
+              return target, unquote(split.fragment)
+
+          for source_file, parser in parsed_pages.items():
+              for _, _, reference in parser.references:
+                  resolved = resolve_internal_reference(
+                      source_file,
+                      reference
+                  )
+
+                  if resolved is None:
+                      continue
+
+                  target, fragment = resolved
+
+                  if not target.exists():
+                      raise SystemExit(
+                          f"{source_file}: broken internal reference "
+                          f"{reference!r}"
+                      )
+
+                  if fragment and target.suffix.lower() == ".html":
+                      target_name = target.as_posix()
+
+                      if target_name in parsed_pages:
+                          target_parser = parsed_pages[target_name]
+                      else:
+                          _, target_parser = parse_page(target_name)
+
+                      if fragment not in target_parser.ids:
+                          raise SystemExit(
+                              f"{source_file}: missing fragment "
+                              f"#{fragment} in {target_name}"
+                          )
+
+          expected_canonicals = {
+              "index.html":
+                  "https://wal-katha.github.io/",
+              "privacy-policy.html":
+                  "https://wal-katha.github.io/privacy-policy.html",
+              "terms.html":
+                  "https://wal-katha.github.io/terms.html",
+              "disclaimer.html":
+                  "https://wal-katha.github.io/disclaimer.html",
+              "copyright-policy.html":
+                  "https://wal-katha.github.io/copyright-policy.html",
+              "cookie-policy.html":
+                  "https://wal-katha.github.io/cookie-policy.html",
+              "accessibility.html":
+                  "https://wal-katha.github.io/accessibility.html",
+              "contact.html":
+                  "https://wal-katha.github.io/contact.html",
+          }
+
+          for filename, expected_url in expected_canonicals.items():
+              actual_url = parsed_pages[filename].canonicals[0]
+
+              if actual_url != expected_url:
+                  raise SystemExit(
+                      f"{filename}: canonical URL should be "
+                      f"{expected_url}"
+                  )
+
+          homepage = Path("index.html").read_text(
+              encoding="utf-8"
+          )
+
+          protected_content = (
+              "500+ VIDEOS READY",
+              "4.8/5 (9,800+)",
+              "VERIFIED",
+              "Exclusive",
+              "Content",
+          )
+
+          for required_text in protected_content:
+              if required_text not in homepage:
+                  raise SystemExit(
+                      "index.html: required promotional content "
+                      f"is missing: {required_text}"
+                  )
+
+          if 'id="promotional-disclosure"' not in homepage:
+              raise SystemExit(
+                  "index.html: promotional disclosure is missing"
+              )
+
+          if "publisher-supplied information" not in homepage:
+              raise SystemExit(
+                  "index.html: promotional disclosure text is missing"
+              )
+
+          prohibited_rating_markup = (
+              '"@type": "AggregateRating"',
+              '"@type":"AggregateRating"',
+              '"aggregateRating"',
+          )
+
+          for prohibited_value in prohibited_rating_markup:
+              if prohibited_value in homepage:
+                  raise SystemExit(
+                      "index.html: promotional rating must not be "
+                      "published as structured AggregateRating data"
                   )
 
           with Path("manifest.webmanifest").open(
               encoding="utf-8"
           ) as manifest_file:
-              json.load(manifest_file)
+              manifest = json.load(manifest_file)
 
-          ET.parse("sitemap.xml")
+          required_manifest_fields = (
+              "id",
+              "name",
+              "short_name",
+              "start_url",
+              "scope",
+              "display",
+              "background_color",
+              "theme_color",
+              "icons",
+          )
 
-          print("HTML, JSON and XML validation passed.")
+          for field in required_manifest_fields:
+              if field not in manifest:
+                  raise SystemExit(
+                      f"manifest.webmanifest: missing {field}"
+                  )
+
+          sitemap_tree = ET.parse("sitemap.xml")
+          sitemap_root = sitemap_tree.getroot()
+
+          namespace = {
+              "sm": "http://www.sitemaps.org/schemas/sitemap/0.9"
+          }
+
+          sitemap_urls = {
+              element.text.strip()
+              for element in sitemap_root.findall(
+                  "sm:url/sm:loc",
+                  namespace
+              )
+              if element.text
+          }
+
+          expected_urls = set(expected_canonicals.values())
+
+          if sitemap_urls != expected_urls:
+              missing_urls = expected_urls - sitemap_urls
+              extra_urls = sitemap_urls - expected_urls
+
+              raise SystemExit(
+                  "sitemap.xml URL mismatch; "
+                  f"missing={sorted(missing_urls)}, "
+                  f"extra={sorted(extra_urls)}"
+              )
+
+          def validate_png(filename):
+              data = Path(filename).read_bytes()
+
+              if len(data) < 24:
+                  raise SystemExit(
+                      f"{filename}: PNG file is too small"
+                  )
+
+              if data[:8] != b"\x89PNG\r\n\x1a\n":
+                  raise SystemExit(
+                      f"{filename}: invalid PNG signature"
+                  )
+
+              width, height = struct.unpack(">II", data[16:24])
+
+              if width < 32 or height < 32:
+                  raise SystemExit(
+                      f"{filename}: PNG dimensions are too small"
+                  )
+
+          validate_png("public/images/logo.png")
+          validate_png("public/images/favicon.png")
+
+          print("HTML, links, JSON, XML and image validation passed.")
           PY
 
           node --check app.js
@@ -136,31 +460,40 @@ jobs:
           rm -rf _site
           mkdir -p _site/public/images
 
-          cp index.html _site/
-          cp 404.html _site/
-          cp privacy-policy.html _site/
-          cp terms.html _site/
-          cp disclaimer.html _site/
-          cp copyright-policy.html _site/
-          cp cookie-policy.html _site/
-          cp accessibility.html _site/
-          cp contact.html _site/
-          cp styles.css _site/
-          cp legal.css _site/
-          cp app.js _site/
-          cp manifest.webmanifest _site/
-          cp robots.txt _site/
-          cp sitemap.xml _site/
-          cp ads.txt _site/
-          cp .nojekyll _site/
+          site_files=(
+            "index.html"
+            "404.html"
+            "privacy-policy.html"
+            "terms.html"
+            "disclaimer.html"
+            "copyright-policy.html"
+            "cookie-policy.html"
+            "accessibility.html"
+            "contact.html"
+            "styles.css"
+            "legal.css"
+            "app.js"
+            "manifest.webmanifest"
+            "robots.txt"
+            "sitemap.xml"
+            "ads.txt"
+            ".nojekyll"
+          )
 
-          cp public/images/logo.png \
+          for file in "${site_files[@]}"; do
+            cp "$file" "_site/$file"
+          done
+
+          cp \
+            public/images/logo.png \
             _site/public/images/logo.png
 
-          cp public/images/banner.jpg \
+          cp \
+            public/images/banner.jpg \
             _site/public/images/banner.jpg
 
-          cp public/images/favicon.png \
+          cp \
+            public/images/favicon.png \
             _site/public/images/favicon.png
 
           echo "Deployment directory:"
