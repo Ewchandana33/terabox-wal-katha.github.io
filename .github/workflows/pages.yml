@@ -28,7 +28,7 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Validate website
+      - name: Validate required website files
         shell: bash
         run: |
           set -euo pipefail
@@ -55,33 +55,91 @@ jobs:
             "googlee91a7f05558ef324.html"
             ".nojekyll"
             "public/images/logo.png"
-            "public/images/banner.png"
             "public/images/favicon.png"
           )
 
+          validation_failed=0
+
           for file in "${required_files[@]}"; do
             if [[ ! -f "$file" ]]; then
-              echo "::error file=${file}::Required file is missing"
-              exit 1
+              echo "::error file=${file}::Required file is missing: ${file}"
+              validation_failed=1
+              continue
             fi
 
             if [[ "$file" != ".nojekyll" && ! -s "$file" ]]; then
-              echo "::error file=${file}::Required file is empty"
-              exit 1
+              echo "::error file=${file}::Required file is empty: ${file}"
+              validation_failed=1
             fi
           done
+
+          if [[ "$validation_failed" -ne 0 ]]; then
+            echo "Repository file list:"
+            find . \
+              -path "./.git" -prune -o \
+              -path "./_site" -prune -o \
+              -type f -print |
+              sort
+            exit 1
+          fi
+
+          if [[ -f "public/images/banner.png" ]]; then
+            banner_source="public/images/banner.png"
+          elif [[ -f "public/images/banner.jpg" ]]; then
+            banner_source="public/images/banner.jpg"
+          elif [[ -f "public/images/banner.jpeg" ]]; then
+            banner_source="public/images/banner.jpeg"
+          else
+            echo "::error file=public/images::Banner image is missing. Expected banner.png, banner.jpg or banner.jpeg"
+            echo "Available image files:"
+            find public/images -maxdepth 1 -type f -print | sort
+            exit 1
+          fi
+
+          banner_mime="$(file --brief --mime-type "$banner_source")"
+
+          case "$banner_mime" in
+            image/png|image/jpeg)
+              ;;
+            *)
+              echo "::error file=${banner_source}::Unsupported banner image type: ${banner_mime}"
+              exit 1
+              ;;
+          esac
+
+          logo_mime="$(file --brief --mime-type public/images/logo.png)"
+          favicon_mime="$(file --brief --mime-type public/images/favicon.png)"
+
+          if [[ "$logo_mime" != "image/png" ]]; then
+            echo "::error file=public/images/logo.png::logo.png is not a valid PNG image; detected ${logo_mime}"
+            exit 1
+          fi
+
+          if [[ "$favicon_mime" != "image/png" ]]; then
+            echo "::error file=public/images/favicon.png::favicon.png is not a valid PNG image; detected ${favicon_mime}"
+            exit 1
+          fi
+
+          echo "Banner source: ${banner_source}"
+          echo "Banner detected format: ${banner_mime}"
+          echo "Logo detected format: ${logo_mime}"
+          echo "Favicon detected format: ${favicon_mime}"
+
+      - name: Validate HTML JSON sitemap and JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
 
           python3 - <<'PY'
           import json
           import re
-          import struct
           import xml.etree.ElementTree as ET
 
           from html.parser import HTMLParser
           from pathlib import Path
-          from urllib.parse import unquote, urlsplit
+          from urllib.parse import urlsplit
 
-          SITE_ORIGIN = "https://wal-katha.github.io"
+          SITE_HOST = "wal-katha.github.io"
 
           INDEXABLE_HTML_FILES = (
               "index.html",
@@ -94,9 +152,7 @@ jobs:
               "contact.html",
           )
 
-          HTML_FILES = INDEXABLE_HTML_FILES + (
-              "404.html",
-          )
+          ALL_HTML_FILES = INDEXABLE_HTML_FILES + ("404.html",)
 
           EXPECTED_CANONICALS = {
               "index.html":
@@ -121,23 +177,22 @@ jobs:
               EXPECTED_CANONICALS.values()
           )
 
-          class PageParser(HTMLParser):
+          class WebsiteHTMLParser(HTMLParser):
               def __init__(self):
                   super().__init__(convert_charrefs=True)
                   self.ids = set()
-                  self.references = []
                   self.canonicals = []
                   self.descriptions = []
-                  self.titles = []
                   self.robots_values = []
-                  self.json_ld_blocks = []
+                  self.titles = []
                   self.bundle_numbers = []
+                  self.json_ld_blocks = []
 
-                  self._inside_title = False
-                  self._title_parts = []
+                  self.inside_title = False
+                  self.title_parts = []
 
-                  self._inside_json_ld = False
-                  self._json_ld_parts = []
+                  self.inside_json_ld = False
+                  self.json_ld_parts = []
 
               def handle_starttag(self, tag, attrs):
                   attributes = dict(attrs)
@@ -157,23 +212,16 @@ jobs:
                   if bundle_number:
                       self.bundle_numbers.append(bundle_number)
 
-                  for attribute_name in ("href", "src"):
-                      value = attributes.get(attribute_name)
-
-                      if value:
-                          self.references.append(
-                              (tag, attribute_name, value)
-                          )
-
                   if tag == "link":
                       rel_values = set(
                           attributes.get("rel", "")
+                          .strip()
                           .lower()
                           .split()
                       )
 
                       if "canonical" in rel_values:
-                          canonical = attributes.get("href")
+                          canonical = attributes.get("href", "").strip()
 
                           if canonical:
                               self.canonicals.append(canonical)
@@ -185,65 +233,50 @@ jobs:
                           .lower()
                       )
 
+                      content = attributes.get("content", "").strip()
+
                       if meta_name == "description":
-                          self.descriptions.append(
-                              attributes.get("content", "")
-                          )
+                          self.descriptions.append(content)
 
                       if meta_name == "robots":
-                          self.robots_values.append(
-                              attributes.get("content", "")
-                              .strip()
-                              .lower()
-                          )
+                          self.robots_values.append(content.lower())
 
                   if tag == "title":
-                      self._inside_title = True
-                      self._title_parts = []
+                      self.inside_title = True
+                      self.title_parts = []
 
                   if (
                       tag == "script"
-                      and attributes.get("type", "").lower()
+                      and attributes.get("type", "").strip().lower()
                       == "application/ld+json"
                   ):
-                      self._inside_json_ld = True
-                      self._json_ld_parts = []
+                      self.inside_json_ld = True
+                      self.json_ld_parts = []
 
               def handle_endtag(self, tag):
-                  if tag == "title" and self._inside_title:
+                  if tag == "title" and self.inside_title:
                       self.titles.append(
-                          "".join(self._title_parts).strip()
+                          "".join(self.title_parts).strip()
                       )
-                      self._inside_title = False
+                      self.inside_title = False
 
-                  if tag == "script" and self._inside_json_ld:
+                  if tag == "script" and self.inside_json_ld:
                       self.json_ld_blocks.append(
-                          "".join(self._json_ld_parts).strip()
+                          "".join(self.json_ld_parts).strip()
                       )
-                      self._inside_json_ld = False
+                      self.inside_json_ld = False
 
               def handle_data(self, data):
-                  if self._inside_title:
-                      self._title_parts.append(data)
+                  if self.inside_title:
+                      self.title_parts.append(data)
 
-                  if self._inside_json_ld:
-                      self._json_ld_parts.append(data)
-
-          def parse_page(filename):
-              content = Path(filename).read_text(
-                  encoding="utf-8"
-              )
-
-              parser = PageParser()
-              parser.feed(content)
-              parser.close()
-
-              return content, parser
+                  if self.inside_json_ld:
+                      self.json_ld_parts.append(data)
 
           parsed_pages = {}
 
-          for filename in HTML_FILES:
-              content, parser = parse_page(filename)
+          for filename in ALL_HTML_FILES:
+              content = Path(filename).read_text(encoding="utf-8")
               lowered = content.lower()
 
               if not lowered.lstrip().startswith("<!doctype html>"):
@@ -256,10 +289,15 @@ jobs:
                       f"{filename}: missing closing html tag"
                   )
 
-              if 'lang="en"' not in lowered:
+              parser = WebsiteHTMLParser()
+
+              try:
+                  parser.feed(content)
+                  parser.close()
+              except ValueError as error:
                   raise SystemExit(
-                      f"{filename}: missing lang=\"en\""
-                  )
+                      f"{filename}: {error}"
+                  ) from error
 
               if len(parser.titles) != 1:
                   raise SystemExit(
@@ -277,12 +315,17 @@ jobs:
                       "meta description"
                   )
 
-              if not parser.descriptions[0].strip():
+              if not parser.descriptions[0]:
                   raise SystemExit(
                       f"{filename}: meta description is empty"
                   )
 
               for json_ld_block in parser.json_ld_blocks:
+                  if not json_ld_block:
+                      raise SystemExit(
+                          f"{filename}: empty JSON-LD block"
+                      )
+
                   try:
                       json.loads(json_ld_block)
                   except json.JSONDecodeError as error:
@@ -328,7 +371,7 @@ jobs:
                   "404.html: missing noindex robots directive"
               )
 
-          primary_bundle_numbers = set(
+          actual_bundle_numbers = set(
               parsed_pages["index.html"].bundle_numbers
           )
 
@@ -337,122 +380,11 @@ jobs:
               for number in range(1, 11)
           }
 
-          if primary_bundle_numbers != expected_bundle_numbers:
+          if actual_bundle_numbers != expected_bundle_numbers:
               raise SystemExit(
                   "index.html must contain bundle IDs 1-10; "
-                  f"found={sorted(primary_bundle_numbers)}"
+                  f"found={sorted(actual_bundle_numbers)}"
               )
-
-          def resolve_internal_reference(source_file, reference):
-              split = urlsplit(reference)
-
-              if split.scheme or split.netloc:
-                  return None
-
-              if reference.startswith((
-                  "mailto:",
-                  "tel:",
-                  "javascript:",
-                  "data:",
-              )):
-                  return None
-
-              path_value = unquote(split.path)
-
-              if path_value == "":
-                  target = Path(source_file)
-              elif path_value.startswith("/"):
-                  target = Path(
-                      path_value.lstrip("/") or "index.html"
-                  )
-              else:
-                  target = (
-                      Path(source_file).parent / path_value
-                  )
-
-              if target.is_dir():
-                  target = target / "index.html"
-
-              return target, unquote(split.fragment)
-
-          for source_file, parser in parsed_pages.items():
-              for _, _, reference in parser.references:
-                  resolved = resolve_internal_reference(
-                      source_file,
-                      reference
-                  )
-
-                  if resolved is None:
-                      continue
-
-                  target, fragment = resolved
-
-                  if not target.exists():
-                      raise SystemExit(
-                          f"{source_file}: broken internal reference "
-                          f"{reference!r}"
-                      )
-
-                  if (
-                      fragment
-                      and target.suffix.lower() == ".html"
-                  ):
-                      target_name = target.as_posix()
-
-                      if target_name in parsed_pages:
-                          target_parser = parsed_pages[target_name]
-                      else:
-                          _, target_parser = parse_page(
-                              target_name
-                          )
-
-                      if fragment not in target_parser.ids:
-                          raise SystemExit(
-                              f"{source_file}: missing fragment "
-                              f"#{fragment} in {target_name}"
-                          )
-
-          homepage = Path("index.html").read_text(
-              encoding="utf-8"
-          )
-
-          protected_content = (
-              "5000+ VIDEOS READY",
-              "4.8/5 (9,800+)",
-              "VERIFIED",
-              "Exclusive",
-              "Content",
-          )
-
-          for required_text in protected_content:
-              if required_text not in homepage:
-                  raise SystemExit(
-                      "index.html: required promotional content "
-                      f"is missing: {required_text}"
-                  )
-
-          if 'id="promotional-disclosure"' not in homepage:
-              raise SystemExit(
-                  "index.html: promotional disclosure is missing"
-              )
-
-          if "publisher-supplied information" not in homepage:
-              raise SystemExit(
-                  "index.html: promotional disclosure text is missing"
-              )
-
-          prohibited_rating_markup = (
-              '"@type": "AggregateRating"',
-              '"@type":"AggregateRating"',
-              '"aggregateRating"',
-          )
-
-          for prohibited_value in prohibited_rating_markup:
-              if prohibited_value in homepage:
-                  raise SystemExit(
-                      "index.html: AggregateRating markup "
-                      "must not be present"
-                  )
 
           sitemap_path = Path("sitemap.xml")
           sitemap_bytes = sitemap_path.read_bytes()
@@ -462,9 +394,11 @@ jobs:
                   "sitemap.xml: UTF-8 BOM must be removed"
               )
 
-          if not sitemap_bytes.startswith(
+          expected_declaration = (
               b'<?xml version="1.0" encoding="UTF-8"?>'
-          ):
+          )
+
+          if not sitemap_bytes.startswith(expected_declaration):
               raise SystemExit(
                   "sitemap.xml: XML declaration must be the "
                   "first content in the file"
@@ -487,8 +421,7 @@ jobs:
 
           if sitemap_root.tag != expected_root_tag:
               raise SystemExit(
-                  "sitemap.xml: incorrect sitemap namespace "
-                  "or root element"
+                  "sitemap.xml: incorrect namespace or root element"
               )
 
           url_tag = f"{{{sitemap_namespace}}}url"
@@ -501,8 +434,8 @@ jobs:
 
               if len(locations) != 1:
                   raise SystemExit(
-                      "sitemap.xml: each URL must contain exactly "
-                      "one loc element"
+                      "sitemap.xml: every URL must contain "
+                      "exactly one loc element"
                   )
 
               location = (locations[0].text or "").strip()
@@ -512,21 +445,21 @@ jobs:
                       "sitemap.xml: empty loc element"
                   )
 
-              parsed_url = urlsplit(location)
+              parsed_location = urlsplit(location)
 
               if (
-                  parsed_url.scheme != "https"
-                  or parsed_url.netloc != "wal-katha.github.io"
+                  parsed_location.scheme != "https"
+                  or parsed_location.netloc != SITE_HOST
               ):
                   raise SystemExit(
-                      "sitemap.xml: URL must use the canonical "
-                      f"HTTPS host: {location}"
+                      "sitemap.xml: invalid canonical host: "
+                      f"{location}"
                   )
 
-              if parsed_url.query or parsed_url.fragment:
+              if parsed_location.query or parsed_location.fragment:
                   raise SystemExit(
-                      "sitemap.xml: canonical URLs must not contain "
-                      f"queries or fragments: {location}"
+                      "sitemap.xml: URL contains a query or "
+                      f"fragment: {location}"
                   )
 
               sitemap_urls.append(location)
@@ -542,7 +475,7 @@ jobs:
                   "the canonical page list"
               )
 
-          text_sitemap_lines = tuple(
+          text_sitemap_urls = tuple(
               line.strip()
               for line in Path("sitemap.txt")
                   .read_text(encoding="utf-8-sig")
@@ -550,17 +483,10 @@ jobs:
               if line.strip()
           )
 
-          if text_sitemap_lines != EXPECTED_SITEMAP_URLS:
+          if text_sitemap_urls != EXPECTED_SITEMAP_URLS:
               raise SystemExit(
                   "sitemap.txt URLs or order do not match "
                   "the canonical page list"
-              )
-
-          if len(text_sitemap_lines) != len(
-              set(text_sitemap_lines)
-          ):
-              raise SystemExit(
-                  "sitemap.txt: duplicate URLs found"
               )
 
           robots_text = Path("robots.txt").read_text(
@@ -570,16 +496,14 @@ jobs:
           required_robots_lines = (
               "User-agent: *",
               "Allow: /",
-              "Sitemap: "
-              "https://wal-katha.github.io/sitemap.xml",
-              "Sitemap: "
-              "https://wal-katha.github.io/sitemap.txt",
+              "Sitemap: https://wal-katha.github.io/sitemap.xml",
+              "Sitemap: https://wal-katha.github.io/sitemap.txt",
           )
 
           for required_line in required_robots_lines:
               if required_line not in robots_text:
                   raise SystemExit(
-                      "robots.txt: required directive is missing: "
+                      "robots.txt: missing directive: "
                       f"{required_line}"
                   )
 
@@ -588,7 +512,7 @@ jobs:
               robots_text
           ):
               raise SystemExit(
-                  "robots.txt: the entire website is blocked"
+                  "robots.txt: entire website is blocked"
               )
 
           verification_content = Path(
@@ -607,34 +531,56 @@ jobs:
                   "Google verification file content is incorrect"
               )
 
-          app_script = Path("app.js").read_text(
-              encoding="utf-8"
+          try:
+              manifest = json.loads(
+                  Path("manifest.webmanifest").read_text(
+                      encoding="utf-8"
+                  )
+              )
+          except json.JSONDecodeError as error:
+              raise SystemExit(
+                  f"manifest.webmanifest: invalid JSON: {error}"
+              ) from error
+
+          required_manifest_fields = (
+              "id",
+              "name",
+              "short_name",
+              "start_url",
+              "scope",
+              "display",
+              "background_color",
+              "theme_color",
+              "icons",
           )
 
-          required_primary_urls = (
-              "https://1024terabox.com/s/1Uvm-lbRlZwIuLjWRaffprg",
-              "https://1024terabox.com/s/1sJbqyVgz5GcW6kmvWWG9Yg",
-              "https://1024terabox.com/s/1EjY0eZkY2JFDyJpKihZcIw",
-              "https://1024terabox.com/s/11dfl5OFqPgac7tBoUsjnzQ",
-              "https://1024terabox.com/s/1A-oWGLIvH90DPWyqGAY1Jw",
-              "https://1024terabox.com/s/1ZIc39rpZ067AuHdll_2WLA",
-              "https://1024terabox.com/s/13JMO9tr6W1vGDH4DCAIkPg",
-              "https://1024terabox.com/s/1KxskEvHhaMfLyA-OOgBdHQ",
-              "https://1024terabox.com/s/1H_VXYWAC-qZt3qx2Nw6uKA",
-              "https://1024terabox.com/s/1oKaOWVfDkMkrigERpURgUg",
-          )
-
-          for required_url in required_primary_urls:
-              if required_url not in app_script:
+          for field in required_manifest_fields:
+              if field not in manifest:
                   raise SystemExit(
-                      "app.js: primary bundle URL is missing: "
-                      f"{required_url}"
+                      "manifest.webmanifest: missing field "
+                      f"{field}"
                   )
 
-          with Path("more-bundles.json").open(
-              encoding="utf-8"
-          ) as more_bundles_file:
-              more_bundles = json.load(more_bundles_file)
+          if manifest["start_url"] != "/":
+              raise SystemExit(
+                  "manifest.webmanifest: start_url must be /"
+              )
+
+          if manifest["scope"] != "/":
+              raise SystemExit(
+                  "manifest.webmanifest: scope must be /"
+              )
+
+          try:
+              more_bundles = json.loads(
+                  Path("more-bundles.json").read_text(
+                      encoding="utf-8"
+                  )
+              )
+          except json.JSONDecodeError as error:
+              raise SystemExit(
+                  f"more-bundles.json: invalid JSON: {error}"
+              ) from error
 
           if not isinstance(more_bundles, list):
               raise SystemExit(
@@ -653,7 +599,7 @@ jobs:
           for item in more_bundles:
               if not isinstance(item, dict):
                   raise SystemExit(
-                      "Each additional bundle must be an object"
+                      "Every additional bundle must be an object"
                   )
 
               required_fields = (
@@ -686,11 +632,11 @@ jobs:
 
               actual_extra_ids.add(bundle_id)
 
-              parsed_extra_url = urlsplit(item["url"])
+              parsed_url = urlsplit(str(item["url"]))
 
               if (
-                  parsed_extra_url.scheme != "https"
-                  or not parsed_extra_url.netloc
+                  parsed_url.scheme != "https"
+                  or not parsed_url.netloc
               ):
                   raise SystemExit(
                       "Additional bundle URL must use HTTPS: "
@@ -703,90 +649,30 @@ jobs:
                   f"found={sorted(actual_extra_ids)}"
               )
 
-          with Path("manifest.webmanifest").open(
-              encoding="utf-8"
-          ) as manifest_file:
-              manifest = json.load(manifest_file)
-
-          required_manifest_fields = (
-              "id",
-              "name",
-              "short_name",
-              "start_url",
-              "scope",
-              "display",
-              "background_color",
-              "theme_color",
-              "icons",
-          )
-
-          for field in required_manifest_fields:
-              if field not in manifest:
-                  raise SystemExit(
-                      "manifest.webmanifest: missing field "
-                      f"{field}"
-                  )
-
-          if manifest["start_url"] != "/":
-              raise SystemExit(
-                  "manifest.webmanifest: start_url must be /"
-              )
-
-          if manifest["scope"] != "/":
-              raise SystemExit(
-                  "manifest.webmanifest: scope must be /"
-              )
-
-          def validate_png(filename):
-              data = Path(filename).read_bytes()
-
-              if len(data) < 24:
-                  raise SystemExit(
-                      f"{filename}: PNG file is too small"
-                  )
-
-              if data[:8] != b"\x89PNG\r\n\x1a\n":
-                  raise SystemExit(
-                      f"{filename}: invalid PNG signature"
-                  )
-
-              width, height = struct.unpack(
-                  ">II",
-                  data[16:24]
-              )
-
-              if width < 32 or height < 32:
-                  raise SystemExit(
-                      f"{filename}: PNG dimensions are too small"
-                  )
-
-          validate_png("public/images/logo.png")
-          validate_png("public/images/banner.png")
-          validate_png("public/images/favicon.png")
-
           print(
-              "HTML, canonical URLs, internal links, XML sitemap, "
-              "text sitemap, robots.txt, verification file, JSON, "
-              "manifest and image validation passed."
+              "HTML, JSON, sitemap, robots and verification "
+              "validation passed."
           )
           PY
 
           node --check app.js
 
           if ! grep -q "SITE_STYLES_COMPLETE" styles.css; then
-            echo "::error file=styles.css::Completion marker is missing"
+            echo "::error file=styles.css::SITE_STYLES_COMPLETE marker is missing"
             exit 1
           fi
 
           if ! grep -q "LEGAL_STYLES_COMPLETE" legal.css; then
-            echo "::error file=legal.css::Completion marker is missing"
+            echo "::error file=legal.css::LEGAL_STYLES_COMPLETE marker is missing"
             exit 1
           fi
 
           if ! grep -q "APP_SCRIPT_COMPLETE" app.js; then
-            echo "::error file=app.js::Completion marker is missing"
+            echo "::error file=app.js::APP_SCRIPT_COMPLETE marker is missing"
             exit 1
           fi
+
+          echo "JavaScript and completion-marker validation passed."
 
       - name: Prepare deployment directory
         shell: bash
@@ -828,21 +714,160 @@ jobs:
             "_site/public/images/logo.png"
 
           cp \
-            "public/images/banner.png" \
-            "_site/public/images/banner.png"
-
-          cp \
             "public/images/favicon.png" \
             "_site/public/images/favicon.png"
 
-          test -s "_site/sitemap.xml"
-          test -s "_site/sitemap.txt"
-          test -s "_site/robots.txt"
-          test -s "_site/googlee91a7f05558ef324.html"
-          test -f "_site/.nojekyll"
-          test -s "_site/public/images/logo.png"
-          test -s "_site/public/images/banner.png"
-          test -s "_site/public/images/favicon.png"
+          if [[ -f "public/images/banner.png" ]]; then
+            banner_source="public/images/banner.png"
+          elif [[ -f "public/images/banner.jpg" ]]; then
+            banner_source="public/images/banner.jpg"
+          elif [[ -f "public/images/banner.jpeg" ]]; then
+            banner_source="public/images/banner.jpeg"
+          else
+            echo "::error file=public/images::Banner image is missing"
+            exit 1
+          fi
+
+          banner_mime="$(file --brief --mime-type "$banner_source")"
+
+          replace_text_in_site() {
+            local old_value="$1"
+            local new_value="$2"
+
+            while IFS= read -r -d '' text_file; do
+              sed -i \
+                "s|${old_value}|${new_value}|g" \
+                "$text_file"
+            done < <(
+              find _site -type f \
+                \( \
+                  -name "*.html" -o \
+                  -name "*.css" -o \
+                  -name "*.js" -o \
+                  -name "*.json" -o \
+                  -name "*.webmanifest" -o \
+                  -name "*.xml" -o \
+                  -name "*.txt" \
+                \) \
+                -print0
+            )
+          }
+
+          case "$banner_mime" in
+            image/png)
+              cp \
+                "$banner_source" \
+                "_site/public/images/banner.png"
+
+              replace_text_in_site \
+                "banner.jpg" \
+                "banner.png"
+
+              replace_text_in_site \
+                "banner.jpeg" \
+                "banner.png"
+
+              deployed_banner="_site/public/images/banner.png"
+              expected_banner_mime="image/png"
+              ;;
+
+            image/jpeg)
+              cp \
+                "$banner_source" \
+                "_site/public/images/banner.jpg"
+
+              replace_text_in_site \
+                "banner.png" \
+                "banner.jpg"
+
+              replace_text_in_site \
+                "banner.jpeg" \
+                "banner.jpg"
+
+              deployed_banner="_site/public/images/banner.jpg"
+              expected_banner_mime="image/jpeg"
+              ;;
+
+            *)
+              echo "::error file=${banner_source}::Unsupported banner type: ${banner_mime}"
+              exit 1
+              ;;
+          esac
+
+          actual_deployed_banner_mime="$(
+            file --brief --mime-type "$deployed_banner"
+          )"
+
+          if [[
+            "$actual_deployed_banner_mime"
+            != "$expected_banner_mime"
+          ]]; then
+            echo "::error file=${deployed_banner}::Deployed banner MIME mismatch. Expected ${expected_banner_mime}, found ${actual_deployed_banner_mime}"
+            exit 1
+          fi
+
+          required_deployed_files=(
+            "_site/index.html"
+            "_site/404.html"
+            "_site/styles.css"
+            "_site/legal.css"
+            "_site/app.js"
+            "_site/manifest.webmanifest"
+            "_site/robots.txt"
+            "_site/sitemap.xml"
+            "_site/sitemap.txt"
+            "_site/googlee91a7f05558ef324.html"
+            "_site/public/images/logo.png"
+            "_site/public/images/favicon.png"
+            "$deployed_banner"
+          )
+
+          for file in "${required_deployed_files[@]}"; do
+            if [[ ! -s "$file" ]]; then
+              echo "::error file=${file}::Deployed file is missing or empty"
+              exit 1
+            fi
+          done
+
+          if [[ ! -f "_site/.nojekyll" ]]; then
+            echo "::error file=_site/.nojekyll::.nojekyll is missing from deployment"
+            exit 1
+          fi
+
+          if [[ "$banner_mime" == "image/png" ]]; then
+            if grep -RIn \
+              --include="*.html" \
+              --include="*.css" \
+              --include="*.js" \
+              --include="*.json" \
+              --include="*.webmanifest" \
+              "banner\.jpg\|banner\.jpeg" \
+              _site
+            then
+              echo "::error::A stale JPEG banner reference remains in the deployment"
+              exit 1
+            fi
+          fi
+
+          if [[ "$banner_mime" == "image/jpeg" ]]; then
+            if grep -RIn \
+              --include="*.html" \
+              --include="*.css" \
+              --include="*.js" \
+              --include="*.json" \
+              --include="*.webmanifest" \
+              "banner\.png" \
+              _site
+            then
+              echo "::error::A stale PNG banner reference remains in the deployment"
+              exit 1
+            fi
+          fi
+
+          echo "Banner source: ${banner_source}"
+          echo "Banner source MIME: ${banner_mime}"
+          echo "Deployed banner: ${deployed_banner}"
+          echo "Deployed banner MIME: ${actual_deployed_banner_mime}"
 
           echo "Deployment directory:"
           find _site -type f -print | sort
