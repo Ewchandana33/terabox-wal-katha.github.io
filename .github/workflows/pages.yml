@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   build:
+    name: Validate and build site
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -27,7 +28,7 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Validate required files
+      - name: Validate website
         shell: bash
         run: |
           set -euo pipefail
@@ -49,7 +50,9 @@ jobs:
             "manifest.webmanifest"
             "robots.txt"
             "sitemap.xml"
+            "sitemap.txt"
             "ads.txt"
+            "googlee91a7f05558ef324.html"
             ".nojekyll"
             "public/images/logo.png"
             "public/images/banner.jpg"
@@ -70,15 +73,18 @@ jobs:
 
           python3 - <<'PY'
           import json
+          import re
           import struct
           import xml.etree.ElementTree as ET
+
           from html.parser import HTMLParser
           from pathlib import Path
           from urllib.parse import unquote, urlsplit
 
-          HTML_FILES = (
+          SITE_ORIGIN = "https://wal-katha.github.io"
+
+          INDEXABLE_HTML_FILES = (
               "index.html",
-              "404.html",
               "privacy-policy.html",
               "terms.html",
               "disclaimer.html",
@@ -86,6 +92,33 @@ jobs:
               "cookie-policy.html",
               "accessibility.html",
               "contact.html",
+          )
+
+          HTML_FILES = INDEXABLE_HTML_FILES + (
+              "404.html",
+          )
+
+          EXPECTED_CANONICALS = {
+              "index.html":
+                  "https://wal-katha.github.io/",
+              "privacy-policy.html":
+                  "https://wal-katha.github.io/privacy-policy.html",
+              "terms.html":
+                  "https://wal-katha.github.io/terms.html",
+              "disclaimer.html":
+                  "https://wal-katha.github.io/disclaimer.html",
+              "copyright-policy.html":
+                  "https://wal-katha.github.io/copyright-policy.html",
+              "cookie-policy.html":
+                  "https://wal-katha.github.io/cookie-policy.html",
+              "accessibility.html":
+                  "https://wal-katha.github.io/accessibility.html",
+              "contact.html":
+                  "https://wal-katha.github.io/contact.html",
+          }
+
+          EXPECTED_SITEMAP_URLS = tuple(
+              EXPECTED_CANONICALS.values()
           )
 
           class PageParser(HTMLParser):
@@ -96,10 +129,13 @@ jobs:
                   self.canonicals = []
                   self.descriptions = []
                   self.titles = []
+                  self.robots_values = []
                   self.json_ld_blocks = []
                   self.bundle_numbers = []
+
                   self._inside_title = False
                   self._title_parts = []
+
                   self._inside_json_ld = False
                   self._json_ld_parts = []
 
@@ -109,6 +145,11 @@ jobs:
                   element_id = attributes.get("id")
 
                   if element_id:
+                      if element_id in self.ids:
+                          raise ValueError(
+                              f"Duplicate HTML id: {element_id}"
+                          )
+
                       self.ids.add(element_id)
 
                   bundle_number = attributes.get("data-bundle")
@@ -126,23 +167,35 @@ jobs:
 
                   if tag == "link":
                       rel_values = set(
-                          attributes.get("rel", "").lower().split()
+                          attributes.get("rel", "")
+                          .lower()
+                          .split()
                       )
 
                       if "canonical" in rel_values:
-                          href = attributes.get("href")
+                          canonical = attributes.get("href")
 
-                          if href:
-                              self.canonicals.append(href)
+                          if canonical:
+                              self.canonicals.append(canonical)
 
-                  if (
-                      tag == "meta"
-                      and attributes.get("name", "").lower()
-                      == "description"
-                  ):
-                      self.descriptions.append(
-                          attributes.get("content", "")
+                  if tag == "meta":
+                      meta_name = (
+                          attributes.get("name", "")
+                          .strip()
+                          .lower()
                       )
+
+                      if meta_name == "description":
+                          self.descriptions.append(
+                              attributes.get("content", "")
+                          )
+
+                      if meta_name == "robots":
+                          self.robots_values.append(
+                              attributes.get("content", "")
+                              .strip()
+                              .lower()
+                          )
 
                   if tag == "title":
                       self._inside_title = True
@@ -193,9 +246,9 @@ jobs:
               content, parser = parse_page(filename)
               lowered = content.lower()
 
-              if "<!doctype html>" not in lowered:
+              if not lowered.lstrip().startswith("<!doctype html>"):
                   raise SystemExit(
-                      f"{filename}: missing HTML doctype"
+                      f"{filename}: missing or misplaced HTML doctype"
                   )
 
               if "</html>" not in lowered:
@@ -203,54 +256,91 @@ jobs:
                       f"{filename}: missing closing html tag"
                   )
 
-              if len(parser.titles) != 1 or not parser.titles[0]:
-                  raise SystemExit(
-                      f"{filename}: must contain one non-empty title"
-                  )
-
-              if (
-                  len(parser.descriptions) != 1
-                  or not parser.descriptions[0].strip()
-              ):
-                  raise SystemExit(
-                      f"{filename}: must contain one meta description"
-                  )
-
               if 'lang="en"' not in lowered:
                   raise SystemExit(
-                      f"{filename}: missing document language"
+                      f"{filename}: missing lang=\"en\""
                   )
 
-              if filename == "404.html":
-                  if "noindex" not in lowered:
-                      raise SystemExit(
-                          "404.html: missing noindex directive"
-                      )
-              elif len(parser.canonicals) != 1:
+              if len(parser.titles) != 1:
                   raise SystemExit(
-                      f"{filename}: expected one canonical URL"
+                      f"{filename}: expected exactly one title"
+                  )
+
+              if not parser.titles[0]:
+                  raise SystemExit(
+                      f"{filename}: title must not be empty"
+                  )
+
+              if len(parser.descriptions) != 1:
+                  raise SystemExit(
+                      f"{filename}: expected exactly one "
+                      "meta description"
+                  )
+
+              if not parser.descriptions[0].strip():
+                  raise SystemExit(
+                      f"{filename}: meta description is empty"
                   )
 
               for json_ld_block in parser.json_ld_blocks:
-                  json.loads(json_ld_block)
+                  try:
+                      json.loads(json_ld_block)
+                  except json.JSONDecodeError as error:
+                      raise SystemExit(
+                          f"{filename}: invalid JSON-LD: {error}"
+                      ) from error
 
               parsed_pages[filename] = parser
 
-          homepage_parser = parsed_pages["index.html"]
+          for filename in INDEXABLE_HTML_FILES:
+              parser = parsed_pages[filename]
+              expected_canonical = EXPECTED_CANONICALS[filename]
 
-          expected_primary_bundles = {
+              if len(parser.canonicals) != 1:
+                  raise SystemExit(
+                      f"{filename}: expected exactly one canonical URL"
+                  )
+
+              if parser.canonicals[0] != expected_canonical:
+                  raise SystemExit(
+                      f"{filename}: canonical URL must be "
+                      f"{expected_canonical}"
+                  )
+
+              for robots_value in parser.robots_values:
+                  directives = {
+                      directive.strip()
+                      for directive in robots_value.split(",")
+                  }
+
+                  if "noindex" in directives:
+                      raise SystemExit(
+                          f"{filename}: indexable page contains noindex"
+                      )
+
+          error_page = parsed_pages["404.html"]
+
+          if not any(
+              "noindex" in robots_value
+              for robots_value in error_page.robots_values
+          ):
+              raise SystemExit(
+                  "404.html: missing noindex robots directive"
+              )
+
+          primary_bundle_numbers = set(
+              parsed_pages["index.html"].bundle_numbers
+          )
+
+          expected_bundle_numbers = {
               str(number)
               for number in range(1, 11)
           }
 
-          actual_primary_bundles = set(
-              homepage_parser.bundle_numbers
-          )
-
-          if actual_primary_bundles != expected_primary_bundles:
+          if primary_bundle_numbers != expected_bundle_numbers:
               raise SystemExit(
-                  "index.html must contain primary bundle buttons 1-10; "
-                  f"found={sorted(actual_primary_bundles)}"
+                  "index.html must contain bundle IDs 1-10; "
+                  f"found={sorted(primary_bundle_numbers)}"
               )
 
           def resolve_internal_reference(source_file, reference):
@@ -303,7 +393,10 @@ jobs:
                           f"{reference!r}"
                       )
 
-                  if fragment and target.suffix.lower() == ".html":
+                  if (
+                      fragment
+                      and target.suffix.lower() == ".html"
+                  ):
                       target_name = target.as_posix()
 
                       if target_name in parsed_pages:
@@ -318,34 +411,6 @@ jobs:
                               f"{source_file}: missing fragment "
                               f"#{fragment} in {target_name}"
                           )
-
-          expected_canonicals = {
-              "index.html":
-                  "https://wal-katha.github.io/",
-              "privacy-policy.html":
-                  "https://wal-katha.github.io/privacy-policy.html",
-              "terms.html":
-                  "https://wal-katha.github.io/terms.html",
-              "disclaimer.html":
-                  "https://wal-katha.github.io/disclaimer.html",
-              "copyright-policy.html":
-                  "https://wal-katha.github.io/copyright-policy.html",
-              "cookie-policy.html":
-                  "https://wal-katha.github.io/cookie-policy.html",
-              "accessibility.html":
-                  "https://wal-katha.github.io/accessibility.html",
-              "contact.html":
-                  "https://wal-katha.github.io/contact.html",
-          }
-
-          for filename, expected_url in expected_canonicals.items():
-              actual_url = parsed_pages[filename].canonicals[0]
-
-              if actual_url != expected_url:
-                  raise SystemExit(
-                      f"{filename}: canonical URL should be "
-                      f"{expected_url}"
-                  )
 
           homepage = Path("index.html").read_text(
               encoding="utf-8"
@@ -385,9 +450,162 @@ jobs:
           for prohibited_value in prohibited_rating_markup:
               if prohibited_value in homepage:
                   raise SystemExit(
-                      "index.html: promotional rating must not be "
-                      "published as structured AggregateRating data"
+                      "index.html: AggregateRating markup "
+                      "must not be present"
                   )
+
+          sitemap_path = Path("sitemap.xml")
+          sitemap_bytes = sitemap_path.read_bytes()
+
+          if sitemap_bytes.startswith(b"\xef\xbb\xbf"):
+              raise SystemExit(
+                  "sitemap.xml: UTF-8 BOM must be removed"
+              )
+
+          if not sitemap_bytes.startswith(
+              b'<?xml version="1.0" encoding="UTF-8"?>'
+          ):
+              raise SystemExit(
+                  "sitemap.xml: XML declaration must be the "
+                  "first content in the file"
+              )
+
+          try:
+              sitemap_root = ET.fromstring(sitemap_bytes)
+          except ET.ParseError as error:
+              raise SystemExit(
+                  f"sitemap.xml: invalid XML: {error}"
+              ) from error
+
+          sitemap_namespace = (
+              "http://www.sitemaps.org/schemas/sitemap/0.9"
+          )
+
+          expected_root_tag = (
+              f"{{{sitemap_namespace}}}urlset"
+          )
+
+          if sitemap_root.tag != expected_root_tag:
+              raise SystemExit(
+                  "sitemap.xml: incorrect sitemap namespace "
+                  "or root element"
+              )
+
+          url_tag = f"{{{sitemap_namespace}}}url"
+          loc_tag = f"{{{sitemap_namespace}}}loc"
+
+          sitemap_urls = []
+
+          for url_element in sitemap_root.findall(url_tag):
+              locations = url_element.findall(loc_tag)
+
+              if len(locations) != 1:
+                  raise SystemExit(
+                      "sitemap.xml: each URL must contain exactly "
+                      "one loc element"
+                  )
+
+              location = (locations[0].text or "").strip()
+
+              if not location:
+                  raise SystemExit(
+                      "sitemap.xml: empty loc element"
+                  )
+
+              parsed_url = urlsplit(location)
+
+              if (
+                  parsed_url.scheme != "https"
+                  or parsed_url.netloc != "wal-katha.github.io"
+              ):
+                  raise SystemExit(
+                      "sitemap.xml: URL must use the canonical "
+                      f"HTTPS host: {location}"
+                  )
+
+              if parsed_url.query or parsed_url.fragment:
+                  raise SystemExit(
+                      "sitemap.xml: canonical URLs must not contain "
+                      f"queries or fragments: {location}"
+                  )
+
+              sitemap_urls.append(location)
+
+          if len(sitemap_urls) != len(set(sitemap_urls)):
+              raise SystemExit(
+                  "sitemap.xml: duplicate URLs found"
+              )
+
+          if tuple(sitemap_urls) != EXPECTED_SITEMAP_URLS:
+              raise SystemExit(
+                  "sitemap.xml URLs or order do not match "
+                  "the canonical page list"
+              )
+
+          text_sitemap_lines = tuple(
+              line.strip()
+              for line in Path("sitemap.txt")
+                  .read_text(encoding="utf-8-sig")
+                  .splitlines()
+              if line.strip()
+          )
+
+          if text_sitemap_lines != EXPECTED_SITEMAP_URLS:
+              raise SystemExit(
+                  "sitemap.txt URLs or order do not match "
+                  "the canonical page list"
+              )
+
+          if len(text_sitemap_lines) != len(
+              set(text_sitemap_lines)
+          ):
+              raise SystemExit(
+                  "sitemap.txt: duplicate URLs found"
+              )
+
+          robots_text = Path("robots.txt").read_text(
+              encoding="utf-8-sig"
+          )
+
+          required_robots_lines = (
+              "User-agent: *",
+              "Allow: /",
+              "Sitemap: "
+              "https://wal-katha.github.io/sitemap.xml",
+              "Sitemap: "
+              "https://wal-katha.github.io/sitemap.txt",
+          )
+
+          for required_line in required_robots_lines:
+              if required_line not in robots_text:
+                  raise SystemExit(
+                      "robots.txt: required directive is missing: "
+                      f"{required_line}"
+                  )
+
+          if re.search(
+              r"(?im)^\s*disallow\s*:\s*/\s*$",
+              robots_text
+          ):
+              raise SystemExit(
+                  "robots.txt: the entire website is blocked"
+              )
+
+          verification_content = Path(
+              "googlee91a7f05558ef324.html"
+          ).read_text(
+              encoding="utf-8-sig"
+          ).strip()
+
+          expected_verification_content = (
+              "google-site-verification: "
+              "googlee91a7f05558ef324.html"
+          )
+
+          if verification_content != expected_verification_content:
+              raise SystemExit(
+                  "Google verification file content is incorrect"
+              )
 
           app_script = Path("app.js").read_text(
               encoding="utf-8"
@@ -449,8 +667,8 @@ jobs:
               for field in required_fields:
                   if field not in item:
                       raise SystemExit(
-                          "Additional bundle is missing "
-                          f"field: {field}"
+                          "Additional bundle is missing field: "
+                          f"{field}"
                       )
 
               bundle_id = item["id"]
@@ -462,16 +680,17 @@ jobs:
 
               if bundle_id in actual_extra_ids:
                   raise SystemExit(
-                      f"Duplicate additional bundle ID: {bundle_id}"
+                      "Duplicate additional bundle ID: "
+                      f"{bundle_id}"
                   )
 
               actual_extra_ids.add(bundle_id)
 
-              split_url = urlsplit(item["url"])
+              parsed_extra_url = urlsplit(item["url"])
 
               if (
-                  split_url.scheme != "https"
-                  or not split_url.netloc
+                  parsed_extra_url.scheme != "https"
+                  or not parsed_extra_url.netloc
               ):
                   raise SystemExit(
                       "Additional bundle URL must use HTTPS: "
@@ -504,35 +723,18 @@ jobs:
           for field in required_manifest_fields:
               if field not in manifest:
                   raise SystemExit(
-                      f"manifest.webmanifest: missing {field}"
+                      "manifest.webmanifest: missing field "
+                      f"{field}"
                   )
 
-          sitemap_tree = ET.parse("sitemap.xml")
-          sitemap_root = sitemap_tree.getroot()
-
-          namespace = {
-              "sm": "http://www.sitemaps.org/schemas/sitemap/0.9"
-          }
-
-          sitemap_urls = {
-              element.text.strip()
-              for element in sitemap_root.findall(
-                  "sm:url/sm:loc",
-                  namespace
-              )
-              if element.text
-          }
-
-          expected_urls = set(expected_canonicals.values())
-
-          if sitemap_urls != expected_urls:
-              missing_urls = expected_urls - sitemap_urls
-              extra_urls = sitemap_urls - expected_urls
-
+          if manifest["start_url"] != "/":
               raise SystemExit(
-                  "sitemap.xml URL mismatch; "
-                  f"missing={sorted(missing_urls)}, "
-                  f"extra={sorted(extra_urls)}"
+                  "manifest.webmanifest: start_url must be /"
+              )
+
+          if manifest["scope"] != "/":
+              raise SystemExit(
+                  "manifest.webmanifest: scope must be /"
               )
 
           def validate_png(filename):
@@ -561,9 +763,17 @@ jobs:
           validate_png("public/images/logo.png")
           validate_png("public/images/favicon.png")
 
+          banner = Path("public/images/banner.jpg").read_bytes()
+
+          if not banner.startswith(b"\xff\xd8"):
+              raise SystemExit(
+                  "public/images/banner.jpg: invalid JPEG signature"
+              )
+
           print(
-              "HTML, bundle data, links, JSON, XML "
-              "and image validation passed."
+              "HTML, canonical URLs, internal links, XML sitemap, "
+              "text sitemap, robots.txt, verification file, JSON, "
+              "manifest and image validation passed."
           )
           PY
 
@@ -609,7 +819,9 @@ jobs:
             "manifest.webmanifest"
             "robots.txt"
             "sitemap.xml"
+            "sitemap.txt"
             "ads.txt"
+            "googlee91a7f05558ef324.html"
             ".nojekyll"
           )
 
@@ -618,16 +830,22 @@ jobs:
           done
 
           cp \
-            public/images/logo.png \
-            _site/public/images/logo.png
+            "public/images/logo.png" \
+            "_site/public/images/logo.png"
 
           cp \
-            public/images/banner.jpg \
-            _site/public/images/banner.jpg
+            "public/images/banner.jpg" \
+            "_site/public/images/banner.jpg"
 
           cp \
-            public/images/favicon.png \
-            _site/public/images/favicon.png
+            "public/images/favicon.png" \
+            "_site/public/images/favicon.png"
+
+          test -s "_site/sitemap.xml"
+          test -s "_site/sitemap.txt"
+          test -s "_site/robots.txt"
+          test -s "_site/googlee91a7f05558ef324.html"
+          test -f "_site/.nojekyll"
 
           echo "Deployment directory:"
           find _site -type f -print | sort
@@ -638,11 +856,13 @@ jobs:
           path: _site
 
   deploy:
+    name: Deploy site
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     permissions:
+      contents: read
       pages: write
       id-token: write
 
