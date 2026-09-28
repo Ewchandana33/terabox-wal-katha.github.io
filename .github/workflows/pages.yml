@@ -45,6 +45,7 @@ jobs:
             "styles.css"
             "legal.css"
             "app.js"
+            "more-bundles.json"
             "manifest.webmanifest"
             "robots.txt"
             "sitemap.xml"
@@ -69,7 +70,6 @@ jobs:
 
           python3 - <<'PY'
           import json
-          import re
           import struct
           import xml.etree.ElementTree as ET
           from html.parser import HTMLParser
@@ -97,6 +97,7 @@ jobs:
                   self.descriptions = []
                   self.titles = []
                   self.json_ld_blocks = []
+                  self.bundle_numbers = []
                   self._inside_title = False
                   self._title_parts = []
                   self._inside_json_ld = False
@@ -109,6 +110,11 @@ jobs:
 
                   if element_id:
                       self.ids.add(element_id)
+
+                  bundle_number = attributes.get("data-bundle")
+
+                  if bundle_number:
+                      self.bundle_numbers.append(bundle_number)
 
                   for attribute_name in ("href", "src"):
                       value = attributes.get(attribute_name)
@@ -171,10 +177,14 @@ jobs:
                       self._json_ld_parts.append(data)
 
           def parse_page(filename):
-              content = Path(filename).read_text(encoding="utf-8")
+              content = Path(filename).read_text(
+                  encoding="utf-8"
+              )
+
               parser = PageParser()
               parser.feed(content)
               parser.close()
+
               return content, parser
 
           parsed_pages = {}
@@ -226,6 +236,23 @@ jobs:
 
               parsed_pages[filename] = parser
 
+          homepage_parser = parsed_pages["index.html"]
+
+          expected_primary_bundles = {
+              str(number)
+              for number in range(1, 11)
+          }
+
+          actual_primary_bundles = set(
+              homepage_parser.bundle_numbers
+          )
+
+          if actual_primary_bundles != expected_primary_bundles:
+              raise SystemExit(
+                  "index.html must contain primary bundle buttons 1-10; "
+                  f"found={sorted(actual_primary_bundles)}"
+              )
+
           def resolve_internal_reference(source_file, reference):
               split = urlsplit(reference)
 
@@ -249,7 +276,9 @@ jobs:
                       path_value.lstrip("/") or "index.html"
                   )
               else:
-                  target = Path(source_file).parent / path_value
+                  target = (
+                      Path(source_file).parent / path_value
+                  )
 
               if target.is_dir():
                   target = target / "index.html"
@@ -280,7 +309,9 @@ jobs:
                       if target_name in parsed_pages:
                           target_parser = parsed_pages[target_name]
                       else:
-                          _, target_parser = parse_page(target_name)
+                          _, target_parser = parse_page(
+                              target_name
+                          )
 
                       if fragment not in target_parser.ids:
                           raise SystemExit(
@@ -358,6 +389,101 @@ jobs:
                       "published as structured AggregateRating data"
                   )
 
+          app_script = Path("app.js").read_text(
+              encoding="utf-8"
+          )
+
+          required_primary_urls = (
+              "https://1024terabox.com/s/1Uvm-lbRlZwIuLjWRaffprg",
+              "https://1024terabox.com/s/1sJbqyVgz5GcW6kmvWWG9Yg",
+              "https://1024terabox.com/s/1EjY0eZkY2JFDyJpKihZcIw",
+              "https://1024terabox.com/s/11dfl5OFqPgac7tBoUsjnzQ",
+              "https://1024terabox.com/s/1A-oWGLIvH90DPWyqGAY1Jw",
+              "https://1024terabox.com/s/1ZIc39rpZ067AuHdll_2WLA",
+              "https://1024terabox.com/s/13JMO9tr6W1vGDH4DCAIkPg",
+              "https://1024terabox.com/s/1KxskEvHhaMfLyA-OOgBdHQ",
+              "https://1024terabox.com/s/1H_VXYWAC-qZt3qx2Nw6uKA",
+              "https://1024terabox.com/s/1oKaOWVfDkMkrigERpURgUg",
+          )
+
+          for required_url in required_primary_urls:
+              if required_url not in app_script:
+                  raise SystemExit(
+                      "app.js: primary bundle URL is missing: "
+                      f"{required_url}"
+                  )
+
+          with Path("more-bundles.json").open(
+              encoding="utf-8"
+          ) as more_bundles_file:
+              more_bundles = json.load(more_bundles_file)
+
+          if not isinstance(more_bundles, list):
+              raise SystemExit(
+                  "more-bundles.json must contain an array"
+              )
+
+          if len(more_bundles) != 10:
+              raise SystemExit(
+                  "more-bundles.json must contain exactly "
+                  "10 additional bundles"
+              )
+
+          expected_extra_ids = set(range(11, 21))
+          actual_extra_ids = set()
+
+          for item in more_bundles:
+              if not isinstance(item, dict):
+                  raise SystemExit(
+                      "Each additional bundle must be an object"
+                  )
+
+              required_fields = (
+                  "id",
+                  "title",
+                  "subtitle",
+                  "url",
+                  "demo",
+              )
+
+              for field in required_fields:
+                  if field not in item:
+                      raise SystemExit(
+                          "Additional bundle is missing "
+                          f"field: {field}"
+                      )
+
+              bundle_id = item["id"]
+
+              if not isinstance(bundle_id, int):
+                  raise SystemExit(
+                      "Additional bundle ID must be an integer"
+                  )
+
+              if bundle_id in actual_extra_ids:
+                  raise SystemExit(
+                      f"Duplicate additional bundle ID: {bundle_id}"
+                  )
+
+              actual_extra_ids.add(bundle_id)
+
+              split_url = urlsplit(item["url"])
+
+              if (
+                  split_url.scheme != "https"
+                  or not split_url.netloc
+              ):
+                  raise SystemExit(
+                      "Additional bundle URL must use HTTPS: "
+                      f"{item['url']}"
+                  )
+
+          if actual_extra_ids != expected_extra_ids:
+              raise SystemExit(
+                  "more-bundles.json must contain IDs 11-20; "
+                  f"found={sorted(actual_extra_ids)}"
+              )
+
           with Path("manifest.webmanifest").open(
               encoding="utf-8"
           ) as manifest_file:
@@ -422,7 +548,10 @@ jobs:
                       f"{filename}: invalid PNG signature"
                   )
 
-              width, height = struct.unpack(">II", data[16:24])
+              width, height = struct.unpack(
+                  ">II",
+                  data[16:24]
+              )
 
               if width < 32 or height < 32:
                   raise SystemExit(
@@ -432,7 +561,10 @@ jobs:
           validate_png("public/images/logo.png")
           validate_png("public/images/favicon.png")
 
-          print("HTML, links, JSON, XML and image validation passed.")
+          print(
+              "HTML, bundle data, links, JSON, XML "
+              "and image validation passed."
+          )
           PY
 
           node --check app.js
@@ -473,6 +605,7 @@ jobs:
             "styles.css"
             "legal.css"
             "app.js"
+            "more-bundles.json"
             "manifest.webmanifest"
             "robots.txt"
             "sitemap.xml"
