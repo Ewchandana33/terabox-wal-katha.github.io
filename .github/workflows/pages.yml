@@ -33,7 +33,15 @@ jobs:
           required_files=(
             "index.html"
             "404.html"
+            "privacy-policy.html"
+            "terms.html"
+            "disclaimer.html"
+            "copyright-policy.html"
+            "cookie-policy.html"
+            "accessibility.html"
+            "contact.html"
             "styles.css"
+            "legal.css"
             "app.js"
             "manifest.webmanifest"
             "robots.txt"
@@ -57,17 +65,40 @@ jobs:
           import xml.etree.ElementTree as ET
           from pathlib import Path
 
-          for filename in ("index.html", "404.html"):
-              content = Path(filename).read_text(encoding="utf-8")
+          html_files = (
+              "index.html",
+              "404.html",
+              "privacy-policy.html",
+              "terms.html",
+              "disclaimer.html",
+              "copyright-policy.html",
+              "cookie-policy.html",
+              "accessibility.html",
+              "contact.html",
+          )
 
-              if "<!doctype html>" not in content.lower():
+          for filename in html_files:
+              content = Path(filename).read_text(encoding="utf-8")
+              lowered = content.lower()
+
+              if "<!doctype html>" not in lowered:
                   raise SystemExit(
-                      f"{filename}: missing <!doctype html>"
+                      f"{filename}: missing HTML doctype"
                   )
 
-              if "</html>" not in content.lower():
+              if "</html>" not in lowered:
                   raise SystemExit(
-                      f"{filename}: missing closing </html> tag"
+                      f"{filename}: missing closing html tag"
+                  )
+
+              if "<title>" not in lowered:
+                  raise SystemExit(
+                      f"{filename}: missing title"
+                  )
+
+              if 'name="description"' not in lowered:
+                  raise SystemExit(
+                      f"{filename}: missing meta description"
                   )
 
           with Path("manifest.webmanifest").open(
@@ -77,7 +108,7 @@ jobs:
 
           ET.parse("sitemap.xml")
 
-          print("Basic HTML, JSON and XML validation passed.")
+          print("HTML, JSON and XML validation passed.")
           PY
 
           node --check app.js
@@ -87,12 +118,15 @@ jobs:
             exit 1
           fi
 
+          if ! grep -q "LEGAL_STYLES_COMPLETE" legal.css; then
+            echo "::error file=legal.css::Completion marker is missing"
+            exit 1
+          fi
+
           if ! grep -q "APP_SCRIPT_COMPLETE" app.js; then
             echo "::error file=app.js::Completion marker is missing"
             exit 1
           fi
-
-          echo "All required files passed validation."
 
       - name: Prepare deployment directory
         shell: bash
@@ -102,15 +136,23 @@ jobs:
           rm -rf _site
           mkdir -p _site/public/images
 
-          cp index.html _site/index.html
-          cp 404.html _site/404.html
-          cp styles.css _site/styles.css
-          cp app.js _site/app.js
-          cp manifest.webmanifest _site/manifest.webmanifest
-          cp robots.txt _site/robots.txt
-          cp sitemap.xml _site/sitemap.xml
-          cp ads.txt _site/ads.txt
-          cp .nojekyll _site/.nojekyll
+          cp index.html _site/
+          cp 404.html _site/
+          cp privacy-policy.html _site/
+          cp terms.html _site/
+          cp disclaimer.html _site/
+          cp copyright-policy.html _site/
+          cp cookie-policy.html _site/
+          cp accessibility.html _site/
+          cp contact.html _site/
+          cp styles.css _site/
+          cp legal.css _site/
+          cp app.js _site/
+          cp manifest.webmanifest _site/
+          cp robots.txt _site/
+          cp sitemap.xml _site/
+          cp ads.txt _site/
+          cp .nojekyll _site/
 
           cp public/images/logo.png \
             _site/public/images/logo.png
@@ -121,7 +163,7 @@ jobs:
           cp public/images/favicon.png \
             _site/public/images/favicon.png
 
-          echo "Deployment directory contents:"
+          echo "Deployment directory:"
           find _site -type f -print | sort
 
       - name: Upload GitHub Pages artifact
