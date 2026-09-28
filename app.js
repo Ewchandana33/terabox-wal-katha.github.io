@@ -14,7 +14,11 @@ const BUNDLE_LINKS = Object.freeze({
     3: null,
     4: null,
     5: null,
-    6: null
+    6: null,
+    7: null,
+    8: null,
+    9: null,
+    10: null
 });
 
 function getValidatedHttpsUrl(value) {
@@ -31,11 +35,7 @@ function getValidatedHttpsUrl(value) {
     try {
         const url = new URL(normalizedValue);
 
-        if (url.protocol !== "https:") {
-            return null;
-        }
-
-        if (!url.hostname) {
+        if (url.protocol !== "https:" || !url.hostname) {
             return null;
         }
 
@@ -61,7 +61,7 @@ function enableBundle(link, destination, bundleNumber) {
     );
 
     if (description) {
-        description.textContent = "EXTERNAL TERABOX LINK";
+        description.textContent = "TERABOX COLLECTION";
     }
 }
 
@@ -76,7 +76,7 @@ function keepBundleUnavailable(link, bundleNumber) {
     link.setAttribute("aria-disabled", "true");
     link.setAttribute(
         "aria-label",
-        `TeraBox bundle ${bundleNumber} is unavailable`
+        `TeraBox bundle ${bundleNumber} is currently unavailable`
     );
 
     if (description) {
@@ -109,13 +109,14 @@ function configureBundleLinks() {
 
     if (availableCount === 0) {
         status.textContent =
-            "No bundle links are currently available. Please check again later.";
+            "Bundle links are currently being updated.";
         status.classList.add("is-unavailable");
         return;
     }
 
     status.textContent =
-        `${availableCount} of ${links.length} bundle links are available.`;
+        `${availableCount} of ${links.length} bundles are available.`;
+
     status.classList.remove("is-unavailable");
 }
 
@@ -151,10 +152,119 @@ function updateCopyrightYear() {
     yearElement.textContent = String(Math.max(2026, currentYear));
 }
 
+function configureAccessGuide() {
+    const launcher = document.getElementById("help-launcher");
+    const dialog = document.getElementById("access-guide-dialog");
+    const closeButton = document.getElementById(
+        "access-dialog-close"
+    );
+    const doneButton = document.getElementById(
+        "access-dialog-done"
+    );
+
+    if (
+        !(launcher instanceof HTMLButtonElement)
+        || !(dialog instanceof HTMLDialogElement)
+    ) {
+        return;
+    }
+
+    let shouldRestoreLauncherFocus = false;
+
+    function openGuide() {
+        shouldRestoreLauncherFocus = true;
+
+        if (typeof dialog.showModal === "function") {
+            dialog.showModal();
+        } else {
+            dialog.setAttribute("open", "");
+        }
+
+        document.body.classList.add("dialog-is-open");
+
+        if (closeButton instanceof HTMLButtonElement) {
+            closeButton.focus();
+        }
+    }
+
+    function closeGuide(options = {}) {
+        const {
+            scrollToBundles = false
+        } = options;
+
+        if (dialog.open && typeof dialog.close === "function") {
+            dialog.close();
+        } else {
+            dialog.removeAttribute("open");
+            document.body.classList.remove("dialog-is-open");
+
+            if (shouldRestoreLauncherFocus) {
+                launcher.focus();
+            }
+        }
+
+        if (scrollToBundles) {
+            const bundles = document.getElementById("bundles");
+
+            if (bundles) {
+                window.setTimeout(() => {
+                    bundles.scrollIntoView({
+                        behavior: window.matchMedia(
+                            "(prefers-reduced-motion: reduce)"
+                        ).matches
+                            ? "auto"
+                            : "smooth",
+                        block: "start"
+                    });
+                }, 50);
+            }
+        }
+    }
+
+    launcher.addEventListener("click", openGuide);
+
+    if (closeButton) {
+        closeButton.addEventListener("click", () => {
+            closeGuide();
+        });
+    }
+
+    if (doneButton) {
+        doneButton.addEventListener("click", () => {
+            closeGuide({
+                scrollToBundles: true
+            });
+        });
+    }
+
+    dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+            closeGuide();
+        }
+    });
+
+    dialog.addEventListener("cancel", () => {
+        document.body.classList.remove("dialog-is-open");
+    });
+
+    dialog.addEventListener("close", () => {
+        document.body.classList.remove("dialog-is-open");
+
+        if (shouldRestoreLauncherFocus) {
+            launcher.focus({
+                preventScroll: true
+            });
+        }
+
+        shouldRestoreLauncherFocus = false;
+    });
+}
+
 function initializeApplication() {
     configureBundleLinks();
     secureExternalLinks();
     updateCopyrightYear();
+    configureAccessGuide();
 }
 
 if (document.readyState === "loading") {
