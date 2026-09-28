@@ -1,8 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://wal-katha.github.io/</loc>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
+        <lastmod>2026-09-28</lastmod>
+    </url>
+
+    <url>
+        <loc>https://wal-katha.github.io/privacy-policy.html</loc>
+        <lastmod>2026-09-28</lastmod>
+    </url>
+
+    <url>
+        <loc>https://wal-katha.github.io/terms.html</loc>
+        <lastmod>2026-09-28</lastmod>
+    </url>
+
+    <url>
+        <loc>https://wal-katha.github.io/disclaimer.html</loc>
+        <lastmod>2026-09-28</lastmod>
+    </url>
+
+    <url>
+        <loc>https://wal-katha.github.io/copyright-policy.html</loc>
+        <lastmod>2026-09-28</lastmod>
+    </url>
+
+    <url>
+        <loc>https://wal-katha.github.io/cookie-policy.html</loc>
+        <lastmod>2026-09-28</lastmod>
+    </url>
+
+    <url>
+        <loc>https://wal-katha.github.io/accessibility.html</loc>
+        <lastmod>2026-09-28</lastmod>
+    </url>
+
+    <url>
+        <loc>https://wal-katha.github.io/contact.html</loc>
+        <lastmod>2026-09-28</lastmod>
     </url>
 </urlset>
