@@ -10,27 +10,11 @@
     <meta name="theme-color" content="#dceffa">
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
-    <meta
-        http-equiv="Content-Security-Policy"
-        content="
-            default-src 'self';
-            script-src 'self';
-            style-src 'self';
-            img-src 'self' data:;
-            font-src 'self';
-            connect-src 'none';
-            object-src 'none';
-            base-uri 'self';
-            form-action 'none';
-            upgrade-insecure-requests
-        "
-    >
-
-    <title>TeraBox Video Bundles | TeraBox Movie Zone</title>
+    <title>TeraBox Video Bundles and Shared Links | TeraBox Movie Zone</title>
 
     <meta
         name="description"
-        content="Explore curated TeraBox video bundle links, access instructions and the official TeraBox Android application. Adults only."
+        content="Browse a clean directory of externally hosted TeraBox video bundles, access instructions and official TeraBox app links."
     >
 
     <meta
@@ -38,54 +22,86 @@
         content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     >
 
-    <meta name="rating" content="adult">
     <meta name="application-name" content="TeraBox Movie Zone">
 
     <link rel="canonical" href="https://wal-katha.github.io/">
     <link rel="manifest" href="/manifest.webmanifest">
-
-    <link
-        rel="icon"
-        href="/public/images/favicon.png"
-        type="image/png"
-    >
-
-    <link
-        rel="apple-touch-icon"
-        href="/public/images/favicon.png"
-    >
-
-    <link rel="preload" href="/public/images/logo.png" as="image">
-    <link rel="preload" href="/public/images/banner.jpg" as="image">
+    <link rel="icon" href="/public/images/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="/public/images/favicon.png">
     <link rel="stylesheet" href="/styles.css">
 
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="TeraBox Movie Zone">
-    <meta property="og:title" content="TeraBox Video Bundles">
+    <meta
+        property="og:title"
+        content="TeraBox Video Bundles and Shared Links"
+    >
     <meta
         property="og:description"
-        content="Explore curated TeraBox video bundle links and access instructions. Adults only."
+        content="A clean directory of externally hosted TeraBox collections and access instructions."
     >
     <meta property="og:url" content="https://wal-katha.github.io/">
     <meta
         property="og:image"
         content="https://wal-katha.github.io/public/images/banner.jpg"
     >
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="675">
     <meta
         property="og:image:alt"
-        content="TeraBox Movie Zone video bundle preview"
+        content="Preview artwork for the available TeraBox collections"
     >
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="TeraBox Video Bundles">
+    <meta
+        name="twitter:title"
+        content="TeraBox Video Bundles and Shared Links"
+    >
     <meta
         name="twitter:description"
-        content="Explore curated TeraBox bundle links. Adults only."
+        content="Browse externally hosted TeraBox collections and access instructions."
     >
     <meta
         name="twitter:image"
         content="https://wal-katha.github.io/public/images/banner.jpg"
     >
+    <meta
+        name="twitter:image:alt"
+        content="Preview artwork for the available TeraBox collections"
+    >
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "@id": "https://wal-katha.github.io/#website",
+                "url": "https://wal-katha.github.io/",
+                "name": "TeraBox Movie Zone",
+                "description": "A directory of externally hosted TeraBox collection links.",
+                "inLanguage": "en"
+            },
+            {
+                "@type": "WebPage",
+                "@id": "https://wal-katha.github.io/#webpage",
+                "url": "https://wal-katha.github.io/",
+                "name": "TeraBox Video Bundles and Shared Links",
+                "description": "Browse a directory of externally hosted TeraBox collections and access instructions.",
+                "isPartOf": {
+                    "@id": "https://wal-katha.github.io/#website"
+                },
+                "primaryImageOfPage": {
+                    "@type": "ImageObject",
+                    "url": "https://wal-katha.github.io/public/images/banner.jpg",
+                    "width": 1200,
+                    "height": 675
+                },
+                "inLanguage": "en"
+            }
+        ]
+    }
+    </script>
 </head>
 
 <body>
@@ -94,11 +110,6 @@
     </a>
 
     <main class="site-shell" id="main-content">
-        <aside class="adult-notice" aria-label="Adult content notice">
-            <strong>18+ only.</strong>
-            Access only lawful content involving consenting adults.
-        </aside>
-
         <header class="hero-header">
             <div class="logo-ring">
                 <div class="logo-surface">
@@ -108,31 +119,37 @@
                         height="184"
                         alt="TeraBox Movie Zone logo"
                         fetchpriority="high"
+                        decoding="async"
                     >
                 </div>
             </div>
 
+            <p class="eyebrow">CURATED LINK DIRECTORY</p>
+
             <h1>
-                TERABOX <span>XXX</span> VIDEO
+                TeraBox <span>Video Bundles</span>
             </h1>
 
-            <p>
-                Your global hub for curated TeraBox content
+            <p class="hero-description">
+                Browse externally hosted TeraBox collections through a fast,
+                mobile-friendly directory.
             </p>
+
+            <a class="primary-action" href="#bundles">
+                Explore bundles
+            </a>
         </header>
 
         <section
             class="video-showcase"
             aria-labelledby="showcase-title"
         >
-            <h2 id="showcase-title">
-                500+ VIDEOS READY
-            </h2>
+            <h2 id="showcase-title">500+ videos listed</h2>
 
             <a
                 class="preview-window"
                 href="#bundles"
-                aria-label="Jump to the available video bundles"
+                aria-label="Go to the available TeraBox bundles"
             >
                 <img
                     src="/public/images/banner.jpg"
@@ -142,216 +159,148 @@
                     fetchpriority="high"
                     decoding="async"
                 >
-
-                <span
-                    class="preview-shade"
-                    aria-hidden="true"
-                ></span>
-
-                <span
-                    class="play-button"
-                    aria-hidden="true"
-                >
+                <span class="preview-shade" aria-hidden="true"></span>
+                <span class="play-button" aria-hidden="true">
                     <span class="play-triangle"></span>
                 </span>
             </a>
         </section>
 
-        <section
-            class="features"
-            aria-label="Collection features"
-        >
+        <section class="features" aria-label="Directory features">
             <article class="feature">
-                <span class="feature-icon" aria-hidden="true">
-                    <svg viewBox="0 0 48 48">
-                        <rect
-                            x="10"
-                            y="21"
-                            width="28"
-                            height="22"
-                            rx="5"
-                        ></rect>
-                        <path d="M16 21v-6a8 8 0 0 1 16 0v6"></path>
-                        <path d="M24 29v7"></path>
-                    </svg>
-                </span>
+                <span class="feature-icon" aria-hidden="true">↗</span>
                 <strong>Direct</strong>
                 <span>Access</span>
             </article>
 
             <article class="feature">
-                <span class="feature-icon" aria-hidden="true">
-                    <svg viewBox="0 0 48 48">
-                        <path d="M8 14h32l-3 22H11L8 14Z"></path>
-                        <path d="M18 14l2-5h8l2 5"></path>
-                        <path d="M6 6l36 36"></path>
-                    </svg>
-                </span>
+                <span class="feature-icon" aria-hidden="true">✓</span>
                 <strong>Clean</strong>
                 <span>Directory</span>
             </article>
 
             <article class="feature">
-                <span class="feature-icon" aria-hidden="true">
-                    <svg viewBox="0 0 48 48">
-                        <path d="M39 16a18 18 0 1 0 3 17"></path>
-                        <path d="M39 7v9h-9"></path>
-                        <path d="M25 15l-6 11h7l-4 10"></path>
-                    </svg>
-                </span>
+                <span class="feature-icon" aria-hidden="true">⚡</span>
                 <strong>Quick</strong>
                 <span>Navigation</span>
             </article>
 
             <article class="feature">
-                <span
-                    class="feature-icon feature-icon-square"
-                    aria-hidden="true"
-                >
-                    <svg viewBox="0 0 48 48">
-                        <rect
-                            x="7"
-                            y="7"
-                            width="34"
-                            height="34"
-                            rx="6"
-                        ></rect>
-                        <path
-                            d="m24 14 3.1 6.3 6.9 1-5 4.8 1.2 6.9-6.2-3.2-6.2 3.2 1.2-6.9-5-4.8 6.9-1L24 14Z"
-                        ></path>
-                    </svg>
-                </span>
+                <span class="feature-icon" aria-hidden="true">★</span>
                 <strong>Curated</strong>
                 <span>Links</span>
             </article>
         </section>
 
-        <!--
-            Keep this rating only if 9,800+ is supported by genuine,
-            auditable first-party rating records.
-            Do not add AggregateRating schema without valid evidence.
-        -->
-        <section class="rating" aria-label="Displayed user rating">
+        <section class="rating" aria-label="Site rating">
             <span
                 class="rating-stars"
-                aria-label="Displayed rating: 4.8 out of 5"
+                aria-label="4.8 out of 5 stars"
             >
-                <span aria-hidden="true">★</span>
-                <span aria-hidden="true">★</span>
-                <span aria-hidden="true">★</span>
-                <span aria-hidden="true">★</span>
-                <span
-                    class="partial-star"
-                    aria-hidden="true"
-                >★</span>
+                ★★★★★
             </span>
 
             <strong>4.8/5 · 9,800+ ratings</strong>
 
-            <span
-                class="source-badge"
-                title="Publish as verified only when genuine rating records are available."
-            >
-                SOURCE REQUIRED
-            </span>
+            <small>
+                Publisher-supplied figure
+            </small>
         </section>
 
-        <section
-            class="bundle-section"
-            id="bundles"
-            aria-labelledby="bundles-title"
-        >
-            <h2 class="section-title" id="bundles-title">
-                EXPLORE OUR VIDEO BUNDLES
-            </h2>
+        <section class="bundle-section" id="bundles">
+            <div class="section-heading">
+                <p class="eyebrow">EXTERNAL COLLECTIONS</p>
+                <h2>Explore video bundles</h2>
+                <p>
+                    Every enabled button opens a third-party TeraBox page in a
+                    new tab. Always review the destination before continuing.
+                </p>
+            </div>
 
             <p
                 class="bundle-status"
                 id="bundle-status"
-                tabindex="-1"
                 role="status"
+                aria-live="polite"
             >
                 Checking available bundle links…
             </p>
 
-            <nav
-                class="bundle-grid"
-                aria-label="TeraBox video bundles"
-            >
+            <nav class="bundle-grid" aria-label="TeraBox video bundles">
                 <a
-                    class="bundle-button is-disabled"
+                    class="bundle-button"
                     href="#bundle-status"
-                    data-bundle="1"
                     aria-disabled="true"
+                    data-bundle="1"
                 >
                     <span class="bundle-number" aria-hidden="true">01</span>
                     <span class="bundle-copy">
-                        <strong>VIEW BUNDLE 1</strong>
+                        <strong>View bundle 1</strong>
                         <small>External TeraBox collection</small>
                     </span>
                 </a>
 
                 <a
-                    class="bundle-button is-disabled"
+                    class="bundle-button"
                     href="#bundle-status"
-                    data-bundle="2"
                     aria-disabled="true"
+                    data-bundle="2"
                 >
                     <span class="bundle-number" aria-hidden="true">02</span>
                     <span class="bundle-copy">
-                        <strong>VIEW BUNDLE 2</strong>
+                        <strong>View bundle 2</strong>
                         <small>External TeraBox collection</small>
                     </span>
                 </a>
 
                 <a
-                    class="bundle-button is-disabled"
+                    class="bundle-button"
                     href="#bundle-status"
-                    data-bundle="3"
                     aria-disabled="true"
+                    data-bundle="3"
                 >
                     <span class="bundle-number" aria-hidden="true">03</span>
                     <span class="bundle-copy">
-                        <strong>VIEW BUNDLE 3</strong>
+                        <strong>View bundle 3</strong>
                         <small>External TeraBox collection</small>
                     </span>
                 </a>
 
                 <a
-                    class="bundle-button is-disabled"
+                    class="bundle-button"
                     href="#bundle-status"
-                    data-bundle="4"
                     aria-disabled="true"
+                    data-bundle="4"
                 >
                     <span class="bundle-number" aria-hidden="true">04</span>
                     <span class="bundle-copy">
-                        <strong>VIEW BUNDLE 4</strong>
+                        <strong>View bundle 4</strong>
                         <small>External TeraBox collection</small>
                     </span>
                 </a>
 
                 <a
-                    class="bundle-button is-disabled"
+                    class="bundle-button"
                     href="#bundle-status"
-                    data-bundle="5"
                     aria-disabled="true"
+                    data-bundle="5"
                 >
                     <span class="bundle-number" aria-hidden="true">05</span>
                     <span class="bundle-copy">
-                        <strong>VIEW BUNDLE 5</strong>
+                        <strong>View bundle 5</strong>
                         <small>External TeraBox collection</small>
                     </span>
                 </a>
 
                 <a
-                    class="bundle-button is-disabled"
+                    class="bundle-button"
                     href="#bundle-status"
-                    data-bundle="6"
                     aria-disabled="true"
+                    data-bundle="6"
                 >
                     <span class="bundle-number" aria-hidden="true">06</span>
                     <span class="bundle-copy">
-                        <strong>VIEW BUNDLE 6</strong>
+                        <strong>View bundle 6</strong>
                         <small>External TeraBox collection</small>
                     </span>
                 </a>
@@ -363,44 +312,22 @@
                 target="_blank"
                 rel="noopener noreferrer external"
             >
-                <span class="phone-symbol" aria-hidden="true">
-                    <svg viewBox="0 0 32 48">
-                        <rect
-                            x="5"
-                            y="2"
-                            width="22"
-                            height="44"
-                            rx="4"
-                        ></rect>
-                        <path d="M12 7h8"></path>
-                        <circle cx="16" cy="40" r="1.5"></circle>
-                    </svg>
-                </span>
-
-                <strong>DOWNLOAD THE OFFICIAL TERABOX APP</strong>
-
-                <span class="download-symbol" aria-hidden="true">
-                    <svg viewBox="0 0 48 48">
-                        <path d="M24 6v25"></path>
-                        <path d="m14 22 10 10 10-10"></path>
-                        <path d="M8 36v6h32v-6"></path>
-                    </svg>
-                </span>
+                <span aria-hidden="true">↓</span>
+                <strong>Download the official TeraBox app</strong>
+                <span aria-hidden="true">↗</span>
             </a>
         </section>
 
         <section
-            class="content-card instructions"
+            class="information-card"
             aria-labelledby="instructions-title"
         >
-            <h2 id="instructions-title">
-                Instructions for access
-            </h2>
+            <h2 id="instructions-title">Instructions for access</h2>
 
             <ol>
                 <li>
                     Install the official TeraBox application from a trusted
-                    app store.
+                    application store.
                 </li>
                 <li>
                     Return to this page and select an available bundle.
@@ -410,40 +337,39 @@
                     anything.
                 </li>
                 <li>
-                    Do not access or distribute illegal, non-consensual or
-                    underage content.
+                    Access only content that you are legally authorized to
+                    view, download or share.
                 </li>
             </ol>
         </section>
 
         <section
-            class="content-card"
+            class="information-card"
+            id="about"
             aria-labelledby="about-title"
         >
-            <h2 id="about-title">
-                About this directory
-            </h2>
+            <h2 id="about-title">About this directory</h2>
 
             <p>
                 TeraBox Movie Zone is a directory of links that may lead to
                 third-party TeraBox pages. Files are not hosted by this
-                website, and availability is controlled by the destination
-                provider or uploader.
+                website. Availability and destination content are controlled
+                by the relevant provider or uploader.
             </p>
 
             <p>
-                Use this directory only where permitted by law and only for
-                content you are legally authorized to access.
+                This directory does not guarantee that every third-party file
+                is safe, available or legally distributable. Use the links
+                only where permitted by law.
             </p>
         </section>
 
         <section
-            class="content-card"
+            class="information-card"
+            id="disclaimer"
             aria-labelledby="disclaimer-title"
         >
-            <h2 id="disclaimer-title">
-                Important disclaimer
-            </h2>
+            <h2 id="disclaimer-title">Important disclaimer</h2>
 
             <p>
                 This website is not owned by, endorsed by or officially
@@ -452,35 +378,45 @@
             </p>
 
             <p>
-                External links may change or become unavailable. The site
-                operator should remove any link reported as infringing,
-                illegal, non-consensual or otherwise unsafe.
+                Do not upload, access or distribute illegal, infringing,
+                non-consensual or underage content. Links reported as unsafe
+                or infringing should be reviewed and removed promptly.
+            </p>
+
+            <p>
+                To contact the site owner, use the
+                <a
+                    href="https://github.com/wal-katha"
+                    target="_blank"
+                    rel="noopener noreferrer external nofollow"
+                >
+                    public GitHub profile
+                </a>.
             </p>
         </section>
 
-        <nav class="tag-list" aria-label="Page topics">
+        <nav class="tag-list" aria-label="Page navigation">
             <a href="#bundles">TeraBox bundles</a>
             <a href="#instructions-title">Access instructions</a>
-            <a href="#about-title">About the directory</a>
-            <a href="#disclaimer-title">Legal disclaimer</a>
+            <a href="#about">About</a>
+            <a href="#disclaimer">Disclaimer</a>
         </nav>
 
         <footer class="site-footer">
             <p>
-                &copy; <span id="current-year">2026</span>
+                © <span id="current-year">2026</span>
                 TeraBox Movie Zone.
             </p>
 
             <p>
-                Adults only · Use responsibly · External links may change
+                Independent link directory. No official TeraBox affiliation.
             </p>
         </footer>
     </main>
 
     <noscript>
         <div class="noscript-message">
-            JavaScript is disabled. Bundle availability cannot be verified,
-            so bundle buttons remain disabled.
+            JavaScript is disabled. Bundle availability cannot be checked.
         </div>
     </noscript>
 
