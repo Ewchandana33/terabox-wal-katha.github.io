@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /404.html
 
 Sitemap: https://wal-katha.github.io/sitemap.xml
+Sitemap: https://wal-katha.github.io/sitemap.txt
