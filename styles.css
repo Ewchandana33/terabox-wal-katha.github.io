@@ -616,6 +616,11 @@ button {
         box-shadow 160ms ease;
 }
 
+/* පළමු Bundle Button 10 සඳහා පමණක් රත්තරන් පාට Frame එක */
+.bundle-grid:not(.extra-bundle-grid) > .bundle-button:nth-child(-n + 10) {
+    border: 2px solid #d4af37;
+}
+
 .bundle-button::before {
     position: absolute;
     inset: 2px 5px auto;
