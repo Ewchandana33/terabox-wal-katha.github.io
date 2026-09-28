@@ -9,6 +9,8 @@
     --blue-dark: #086394;
     --star: #f6b919;
     --white: #ffffff;
+    --red: #f11919;
+    --black: #111111;
     --page-width: 700px;
     --shadow:
         12px 15px 27px rgba(52, 104, 133, 0.28),
@@ -54,6 +56,10 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+body.dialog-is-open {
+    overflow: hidden;
+}
+
 img,
 svg {
     display: block;
@@ -67,6 +73,10 @@ a {
 button,
 a {
     -webkit-tap-highlight-color: transparent;
+}
+
+button {
+    font: inherit;
 }
 
 :focus-visible {
@@ -83,7 +93,7 @@ a {
     position: fixed;
     top: 10px;
     left: 10px;
-    z-index: 999;
+    z-index: 9999;
     padding: 10px 15px;
     color: #ffffff;
     background: #063c60;
@@ -107,7 +117,7 @@ a {
     padding:
         max(20px, env(safe-area-inset-top))
         clamp(17px, 5vw, 40px)
-        max(30px, env(safe-area-inset-bottom));
+        max(110px, calc(env(safe-area-inset-bottom) + 80px));
     overflow: hidden;
     background:
         radial-gradient(
@@ -188,7 +198,6 @@ a {
 }
 
 .logo-surface {
-    display: block;
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -552,6 +561,7 @@ a {
 }
 
 .bundle-button {
+    position: relative;
     display: flex;
     min-width: 0;
     min-height: 82px;
@@ -570,6 +580,37 @@ a {
         transform 160ms ease,
         box-shadow 160ms ease,
         opacity 160ms ease;
+}
+
+.live-dot {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    background: var(--red);
+    border: 2px solid rgba(255, 255, 255, 0.92);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(241, 25, 25, 0.18);
+    animation: bundle-dot-blink 1.1s steps(1, end) infinite;
+}
+
+@keyframes bundle-dot-blink {
+    0%,
+    49% {
+        background: var(--red);
+        box-shadow:
+            0 0 0 3px rgba(241, 25, 25, 0.2),
+            0 0 10px rgba(241, 25, 25, 0.75);
+    }
+
+    50%,
+    100% {
+        background: var(--black);
+        box-shadow:
+            0 0 0 3px rgba(17, 17, 17, 0.12),
+            0 0 2px rgba(17, 17, 17, 0.45);
+    }
 }
 
 .bundle-button.is-disabled {
@@ -605,6 +646,7 @@ a {
 
 .bundle-copy {
     min-width: 0;
+    padding-right: 8px;
 }
 
 .bundle-copy strong,
@@ -764,6 +806,349 @@ a {
     margin-top: 6px;
 }
 
+.help-launcher {
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 500;
+    display: flex;
+    min-height: 58px;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 15px 8px 8px;
+    color: #ffffff;
+    background: linear-gradient(145deg, #159ade, #075f91);
+    border: 2px solid rgba(255, 255, 255, 0.82);
+    border-radius: 999px;
+    box-shadow:
+        0 13px 28px rgba(4, 67, 105, 0.37),
+        inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    isolation: isolate;
+    animation: help-launcher-float 2.4s ease-in-out infinite;
+}
+
+.help-launcher-pulse {
+    position: absolute;
+    inset: -6px;
+    z-index: -1;
+    border: 2px solid rgba(19, 136, 197, 0.6);
+    border-radius: inherit;
+    animation: help-pulse 1.8s ease-out infinite;
+}
+
+.help-launcher-icon {
+    position: relative;
+    display: flex;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 50%;
+}
+
+.help-launcher-icon::after {
+    position: absolute;
+    right: 4px;
+    bottom: 2px;
+    width: 9px;
+    height: 9px;
+    background: #ffffff;
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
+    content: "";
+    transform: rotate(17deg);
+}
+
+.help-launcher-icon > span {
+    position: relative;
+    z-index: 1;
+    width: 4px;
+    height: 4px;
+    background: #0872a9;
+    border-radius: 50%;
+}
+
+.help-launcher-label {
+    font-size: 0.78rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.help-notification {
+    position: absolute;
+    top: -7px;
+    right: -4px;
+    display: grid;
+    width: 23px;
+    height: 23px;
+    place-items: center;
+    color: #ffffff;
+    background: #e21b1b;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 4px 9px rgba(126, 0, 0, 0.35);
+    font-size: 0.68rem;
+    font-weight: 900;
+}
+
+@keyframes help-launcher-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-7px);
+    }
+}
+
+@keyframes help-pulse {
+    0% {
+        opacity: 0.65;
+        transform: scale(0.94);
+    }
+
+    75%,
+    100% {
+        opacity: 0;
+        transform: scale(1.14);
+    }
+}
+
+.access-dialog {
+    width: min(calc(100% - 24px), 680px);
+    max-height: min(90vh, 850px);
+    margin: auto;
+    padding: 0;
+    overflow: hidden;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-radius: 30px;
+    box-shadow: 0 25px 70px rgba(4, 39, 60, 0.48);
+}
+
+.access-dialog::backdrop {
+    background: rgba(5, 25, 39, 0.72);
+    backdrop-filter: blur(7px);
+}
+
+.access-dialog[open] {
+    animation: dialog-enter 220ms ease-out both;
+}
+
+@keyframes dialog-enter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.access-dialog-panel {
+    max-height: min(90vh, 850px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background:
+        radial-gradient(
+            circle at 50% -10%,
+            rgba(255, 255, 255, 0.98),
+            transparent 40%
+        ),
+        linear-gradient(155deg, #f1fbff, #cce8f5);
+}
+
+.access-dialog-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 20px;
+    background: rgba(236, 249, 255, 0.96);
+    border-bottom: 1px solid rgba(45, 101, 132, 0.16);
+    backdrop-filter: blur(14px);
+}
+
+.access-dialog-heading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+}
+
+.access-dialog-logo {
+    width: 58px;
+    min-width: 58px;
+    height: 58px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 3px solid #168fcb;
+    border-radius: 50%;
+}
+
+.access-dialog-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.07);
+}
+
+.access-dialog-eyebrow {
+    display: block;
+    color: #0873aa;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+}
+
+.access-dialog-header h2 {
+    margin: 4px 0 0;
+    color: #153b53;
+    font-size: clamp(1.25rem, 5vw, 1.8rem);
+    line-height: 1.1;
+}
+
+.access-dialog-close {
+    display: grid;
+    width: 43px;
+    min-width: 43px;
+    height: 43px;
+    place-items: center;
+    padding: 0;
+    color: #173f57;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(49, 104, 133, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.access-dialog-body {
+    padding: 22px clamp(17px, 5vw, 28px);
+}
+
+.access-dialog-introduction {
+    margin: 0;
+    color: #34576b;
+    font-size: 0.96rem;
+}
+
+.access-steps {
+    display: grid;
+    gap: 14px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.access-steps > li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 13px;
+    padding: 16px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(248, 253, 255, 0.96),
+            rgba(208, 234, 246, 0.94)
+        );
+    border: 1px solid rgba(255, 255, 255, 0.92);
+    border-radius: 19px;
+    box-shadow:
+        5px 7px 14px rgba(52, 104, 133, 0.16),
+        -4px -4px 11px rgba(255, 255, 255, 0.75);
+}
+
+.access-step-number {
+    display: grid;
+    width: 35px;
+    height: 35px;
+    place-items: center;
+    color: #ffffff;
+    background: linear-gradient(145deg, #159ade, #086ba5);
+    border-radius: 50%;
+    box-shadow: 0 5px 11px rgba(11, 99, 150, 0.25);
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+
+.access-steps h3 {
+    margin: 4px 0 0;
+    color: #153b53;
+    font-size: 1rem;
+    line-height: 1.25;
+}
+
+.access-steps p {
+    margin: 7px 0 0;
+    color: #36586b;
+    font-size: 0.85rem;
+    line-height: 1.55;
+}
+
+.dialog-download-button {
+    display: inline-flex;
+    min-height: 45px;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 9px 16px;
+    color: #ffffff;
+    background: linear-gradient(145deg, #159ade, #086ba5);
+    border-radius: 999px;
+    box-shadow: 0 8px 17px rgba(11, 99, 150, 0.25);
+    font-size: 0.79rem;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.access-safety-notice {
+    margin-top: 18px;
+    padding: 15px 17px;
+    color: #5a420e;
+    background: rgba(255, 246, 199, 0.9);
+    border: 1px solid rgba(155, 111, 0, 0.24);
+    border-radius: 16px;
+    font-size: 0.8rem;
+    line-height: 1.55;
+}
+
+.access-dialog-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding: 15px 20px max(15px, env(safe-area-inset-bottom));
+    background: rgba(223, 242, 250, 0.96);
+    border-top: 1px solid rgba(45, 101, 132, 0.16);
+    backdrop-filter: blur(14px);
+}
+
+.access-dialog-done {
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 20px;
+    color: #ffffff;
+    background: linear-gradient(145deg, #159ade, #086ba5);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    box-shadow: 0 9px 19px rgba(11, 99, 150, 0.27);
+    cursor: pointer;
+    font-weight: 900;
+}
+
 .noscript-message {
     position: fixed;
     right: 12px;
@@ -786,13 +1171,28 @@ a {
 @media (hover: hover) and (pointer: fine) {
     .hero-button:hover,
     .download-button:hover,
-    .bundle-button:not(.is-disabled):hover {
+    .bundle-button:not(.is-disabled):hover,
+    .dialog-download-button:hover,
+    .access-dialog-done:hover {
         box-shadow: 0 14px 27px rgba(11, 99, 150, 0.36);
         transform: translateY(-2px);
     }
 
     .preview-window:hover .play-button {
         transform: translate(-50%, -50%) scale(1.04);
+    }
+
+    .help-launcher:hover {
+        animation-play-state: paused;
+        box-shadow:
+            0 16px 32px rgba(4, 67, 105, 0.46),
+            inset 0 1px 1px rgba(255, 255, 255, 0.35);
+        transform: translateY(-3px);
+    }
+
+    .access-dialog-close:hover {
+        color: #ffffff;
+        background: #075f91;
     }
 
     .tag-list a:hover,
@@ -814,6 +1214,37 @@ a {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         row-gap: 22px;
     }
+
+    .access-dialog {
+        width: calc(100% - 14px);
+        max-height: calc(100vh - 14px);
+        border-radius: 23px;
+    }
+
+    .access-dialog-panel {
+        max-height: calc(100vh - 14px);
+    }
+
+    .access-dialog-header {
+        padding: 16px;
+    }
+
+    .access-dialog-logo {
+        width: 50px;
+        min-width: 50px;
+        height: 50px;
+    }
+
+    .help-launcher-label {
+        display: none;
+    }
+
+    .help-launcher {
+        width: 60px;
+        height: 60px;
+        justify-content: center;
+        padding: 7px;
+    }
 }
 
 @media (max-width: 360px) {
@@ -832,6 +1263,18 @@ a {
     .external-icon {
         display: none;
     }
+
+    .access-dialog-heading {
+        gap: 8px;
+    }
+
+    .access-dialog-logo {
+        display: none;
+    }
+
+    .access-steps > li {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -847,6 +1290,11 @@ a {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
     }
+
+    .live-dot {
+        background: var(--red);
+        box-shadow: 0 0 0 3px rgba(241, 25, 25, 0.2);
+    }
 }
 
 @media (prefers-contrast: more) {
@@ -858,7 +1306,8 @@ a {
     .bundle-status,
     .information-card,
     .promotional-disclosure,
-    .tag-list a {
+    .tag-list a,
+    .access-steps > li {
         border-color: #55788b;
     }
 }
@@ -880,6 +1329,8 @@ a {
     .bundle-section,
     .tag-list,
     .footer-legal-links,
+    .help-launcher,
+    .access-dialog,
     .noscript-message {
         display: none;
     }
