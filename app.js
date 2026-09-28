@@ -1,8 +1,12 @@
 "use strict";
 
 /*
- * Replace null with real HTTPS bundle URLs that you are authorized
- * to publish.
+ * Add only HTTPS bundle URLs that you are legally authorized to publish.
+ *
+ * Example:
+ * 1: "https://example.com/authorized-destination"
+ *
+ * Leave a value as null when the bundle is unavailable.
  */
 const BUNDLE_LINKS = Object.freeze({
     1: null,
@@ -13,115 +17,110 @@ const BUNDLE_LINKS = Object.freeze({
     6: null
 });
 
-const LEGAL_LINKS = Object.freeze([
-    {
-        href: "/privacy-policy.html",
-        label: "Privacy Policy"
-    },
-    {
-        href: "/terms.html",
-        label: "Terms"
-    },
-    {
-        href: "/disclaimer.html",
-        label: "Disclaimer"
-    },
-    {
-        href: "/copyright-policy.html",
-        label: "Copyright"
-    },
-    {
-        href: "/cookie-policy.html",
-        label: "Cookies"
-    },
-    {
-        href: "/accessibility.html",
-        label: "Accessibility"
-    },
-    {
-        href: "/contact.html",
-        label: "Contact"
+function getValidatedHttpsUrl(value) {
+    if (typeof value !== "string") {
+        return null;
     }
-]);
 
-function isValidHttpsUrl(value) {
-    if (typeof value !== "string" || value.trim() === "") {
-        return false;
+    const normalizedValue = value.trim();
+
+    if (normalizedValue === "") {
+        return null;
     }
 
     try {
-        const url = new URL(value);
-        return url.protocol === "https:";
+        const url = new URL(normalizedValue);
+
+        if (url.protocol !== "https:") {
+            return null;
+        }
+
+        if (!url.hostname) {
+            return null;
+        }
+
+        return url.href;
     } catch {
-        return false;
+        return null;
     }
 }
 
-function enableBundle(button, destination, bundleNumber) {
-    button.href = destination;
-    button.target = "_blank";
-    button.rel = "noopener noreferrer external nofollow";
-    button.removeAttribute("aria-disabled");
+function enableBundle(link, destination, bundleNumber) {
+    const description = link.querySelector("small");
 
-    button.setAttribute(
+    link.href = destination;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer external nofollow";
+
+    link.classList.remove("is-disabled");
+    link.removeAttribute("aria-disabled");
+
+    link.setAttribute(
         "aria-label",
         `Open TeraBox bundle ${bundleNumber} in a new tab`
     );
+
+    if (description) {
+        description.textContent = "EXTERNAL TERABOX LINK";
+    }
 }
 
-function disableBundle(button) {
-    button.href = "#bundle-status";
-    button.setAttribute("aria-disabled", "true");
-    button.removeAttribute("target");
-    button.removeAttribute("rel");
+function keepBundleUnavailable(link, bundleNumber) {
+    const description = link.querySelector("small");
 
-    button.addEventListener("click", (event) => {
-        event.preventDefault();
+    link.removeAttribute("href");
+    link.removeAttribute("target");
+    link.removeAttribute("rel");
 
-        const status = document.getElementById("bundle-status");
+    link.classList.add("is-disabled");
+    link.setAttribute("aria-disabled", "true");
+    link.setAttribute(
+        "aria-label",
+        `TeraBox bundle ${bundleNumber} is unavailable`
+    );
 
-        if (status) {
-            status.textContent =
-                "This bundle is temporarily unavailable.";
-
-            status.focus({
-                preventScroll: false
-            });
-        }
-    });
+    if (description) {
+        description.textContent = "CURRENTLY UNAVAILABLE";
+    }
 }
 
 function configureBundleLinks() {
-    const buttons = document.querySelectorAll("[data-bundle]");
+    const links = document.querySelectorAll("[data-bundle]");
+    const status = document.getElementById("bundle-status");
     let availableCount = 0;
 
-    buttons.forEach((button) => {
-        const bundleNumber = button.dataset.bundle;
-        const destination = BUNDLE_LINKS[bundleNumber];
+    links.forEach((link) => {
+        const bundleNumber = link.dataset.bundle;
+        const configuredValue = BUNDLE_LINKS[bundleNumber];
+        const destination = getValidatedHttpsUrl(configuredValue);
 
-        if (isValidHttpsUrl(destination)) {
-            enableBundle(button, destination, bundleNumber);
+        if (destination) {
+            enableBundle(link, destination, bundleNumber);
             availableCount += 1;
-        } else {
-            disableBundle(button);
+            return;
         }
-    });
 
-    const status = document.getElementById("bundle-status");
+        keepBundleUnavailable(link, bundleNumber);
+    });
 
     if (!status) {
         return;
     }
 
-    status.textContent = availableCount > 0
-        ? `${availableCount} of ${buttons.length} bundles are available.`
-        : "Bundle links are currently being updated.";
+    if (availableCount === 0) {
+        status.textContent =
+            "No bundle links are currently available. Please check again later.";
+        status.classList.add("is-unavailable");
+        return;
+    }
+
+    status.textContent =
+        `${availableCount} of ${links.length} bundle links are available.`;
+    status.classList.remove("is-unavailable");
 }
 
 function secureExternalLinks() {
-    const links = document.querySelectorAll(
-        'a[target="_blank"]'
-    );
+    const links = document.querySelectorAll('a[target="_blank"]');
 
     links.forEach((link) => {
         const relValues = new Set(
@@ -141,40 +140,19 @@ function secureExternalLinks() {
     });
 }
 
-function addLegalNavigation() {
-    const footer = document.querySelector(".site-footer");
+function updateCopyrightYear() {
+    const yearElement = document.getElementById("current-year");
 
-    if (!footer || document.querySelector(".footer-legal-links")) {
+    if (!yearElement) {
         return;
     }
 
-    const navigation = document.createElement("nav");
-    navigation.className = "footer-legal-links";
-    navigation.setAttribute("aria-label", "Legal and support pages");
-
-    LEGAL_LINKS.forEach((item) => {
-        const link = document.createElement("a");
-        link.href = item.href;
-        link.textContent = item.label;
-        navigation.appendChild(link);
-    });
-
-    footer.insertAdjacentElement("beforebegin", navigation);
-}
-
-function updateCopyrightYear() {
-    const year = document.getElementById("current-year");
-
-    if (year) {
-        year.textContent = String(
-            new Date().getFullYear()
-        );
-    }
+    const currentYear = new Date().getFullYear();
+    yearElement.textContent = String(Math.max(2026, currentYear));
 }
 
 function initializeApplication() {
     configureBundleLinks();
-    addLegalNavigation();
     secureExternalLinks();
     updateCopyrightYear();
 }
