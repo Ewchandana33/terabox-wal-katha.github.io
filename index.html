@@ -1,661 +1,717 @@
-"use strict";
-
-/*
- * Publish only links that you are legally authorized to share.
- *
- * Bundles 1-10 are the primary links supplied by the site operator.
- * Bundles 11-20 are loaded from /more-bundles.json.
- */
-const BUNDLE_LINKS = Object.freeze({
-    1: "https://1024terabox.com/s/1Uvm-lbRlZwIuLjWRaffprg",
-    2: "https://1024terabox.com/s/1sJbqyVgz5GcW6kmvWWG9Yg",
-    3: "https://1024terabox.com/s/1EjY0eZkY2JFDyJpKihZcIw",
-    4: "https://1024terabox.com/s/11dfl5OFqPgac7tBoUsjnzQ",
-    5: "https://1024terabox.com/s/1A-oWGLIvH90DPWyqGAY1Jw",
-    6: "https://1024terabox.com/s/1ZIc39rpZ067AuHdll_2WLA",
-    7: "https://1024terabox.com/s/13JMO9tr6W1vGDH4DCAIkPg",
-    8: "https://1024terabox.com/s/1KxskEvHhaMfLyA-OOgBdHQ",
-    9: "https://1024terabox.com/s/1H_VXYWAC-qZt3qx2Nw6uKA",
-    10: "https://1024terabox.com/s/1oKaOWVfDkMkrigERpURgUg"
-});
-
-const MORE_BUNDLES_URL = "/more-bundles.json";
-const PRIMARY_BUNDLE_COUNT = 10;
-const EXTRA_BUNDLE_START = 11;
-const EXTRA_BUNDLE_END = 20;
-
-function getValidatedHttpsUrl(value) {
-    if (typeof value !== "string") {
-        return null;
-    }
-
-    const normalizedValue = value.trim();
-
-    if (normalizedValue === "") {
-        return null;
-    }
-
-    try {
-        const url = new URL(normalizedValue);
-
-        if (
-            url.protocol !== "https:"
-            || !url.hostname
-            || url.username
-            || url.password
-        ) {
-            return null;
-        }
-
-        return url.href;
-    } catch {
-        return null;
-    }
-}
-
-function enableBundle(
-    link,
-    destination,
-    bundleNumber,
-    subtitle = "TERABOX COLLECTION"
-) {
-    const description = link.querySelector("small");
-
-    link.href = destination;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer external nofollow";
-
-    link.classList.remove("is-disabled");
-    link.removeAttribute("aria-disabled");
-
-    link.setAttribute(
-        "aria-label",
-        `Open TeraBox bundle ${bundleNumber} in a new tab`
-    );
-
-    if (description) {
-        description.textContent = subtitle;
-    }
-}
-
-function keepBundleUnavailable(link, bundleNumber) {
-    const description = link.querySelector("small");
-
-    link.removeAttribute("href");
-    link.removeAttribute("target");
-    link.removeAttribute("rel");
-
-    link.classList.add("is-disabled");
-    link.setAttribute("aria-disabled", "true");
-    link.setAttribute(
-        "aria-label",
-        `TeraBox bundle ${bundleNumber} is currently unavailable`
-    );
-
-    if (description) {
-        description.textContent = "CURRENTLY UNAVAILABLE";
-    }
-}
-
-function configurePrimaryBundleLinks() {
-    const links = document.querySelectorAll(
-        "[data-bundle]:not([data-extra-bundle])"
-    );
-
-    const status = document.getElementById("bundle-status");
-    let availableCount = 0;
-
-    links.forEach((link) => {
-        const bundleNumber = link.dataset.bundle;
-        const configuredValue = BUNDLE_LINKS[bundleNumber];
-        const destination = getValidatedHttpsUrl(configuredValue);
-
-        if (destination) {
-            enableBundle(
-                link,
-                destination,
-                bundleNumber,
-                "TERABOX COLLECTION"
-            );
-
-            availableCount += 1;
-            return;
-        }
-
-        keepBundleUnavailable(link, bundleNumber);
-    });
-
-    if (!status) {
-        return;
-    }
-
-    if (availableCount === 0) {
-        status.textContent =
-            "Bundle links are currently being updated.";
-
-        status.classList.add("is-unavailable");
-        return;
-    }
-
-    status.textContent =
-        `${availableCount} of ${links.length} bundles are available.`;
-
-    status.classList.remove("is-unavailable");
-}
-
-function createElement(tagName, className, textContent) {
-    const element = document.createElement(tagName);
-
-    if (className) {
-        element.className = className;
-    }
-
-    if (typeof textContent === "string") {
-        element.textContent = textContent;
-    }
-
-    return element;
-}
-
-function createExtraBundleElement(bundle) {
-    const link = createElement(
-        "a",
-        "bundle-button is-disabled"
-    );
-
-    link.dataset.bundle = String(bundle.id);
-    link.dataset.extraBundle = "true";
-    link.setAttribute("aria-disabled", "true");
-
-    const liveDot = createElement("span", "live-dot");
-    liveDot.setAttribute("aria-hidden", "true");
-
-    const icon = createElement(
-        "span",
-        "bundle-icon",
-        String(bundle.id).padStart(2, "0")
-    );
-
-    icon.setAttribute("aria-hidden", "true");
-
-    const copy = createElement("span", "bundle-copy");
-
-    const title = createElement(
-        "strong",
-        "",
-        bundle.title || `VIEW BUNDLE ${bundle.id}`
-    );
-
-    const subtitle = createElement(
-        "small",
-        "",
-        bundle.subtitle || "TERABOX COLLECTION"
-    );
-
-    copy.append(title, subtitle);
-    link.append(liveDot, icon, copy);
-
-    const destination = getValidatedHttpsUrl(bundle.url);
-
-    if (destination) {
-        enableBundle(
-            link,
-            destination,
-            bundle.id,
-            bundle.subtitle || "TERABOX COLLECTION"
-        );
-    } else {
-        keepBundleUnavailable(link, bundle.id);
-    }
-
-    return link;
-}
-
-function validateMoreBundles(data) {
-    if (!Array.isArray(data)) {
-        throw new TypeError(
-            "The additional bundle file must contain an array."
-        );
-    }
-
-    const validBundles = [];
-    const usedIds = new Set();
-
-    data.forEach((item) => {
-        if (
-            !item
-            || typeof item !== "object"
-            || !Number.isInteger(item.id)
-            || item.id < EXTRA_BUNDLE_START
-            || item.id > EXTRA_BUNDLE_END
-            || usedIds.has(item.id)
-        ) {
-            return;
-        }
-
-        const destination = getValidatedHttpsUrl(item.url);
-
-        if (!destination) {
-            return;
-        }
-
-        usedIds.add(item.id);
-
-        validBundles.push({
-            id: item.id,
-            title:
-                typeof item.title === "string"
-                    ? item.title.trim()
-                    : `VIEW BUNDLE ${item.id}`,
-            subtitle:
-                typeof item.subtitle === "string"
-                    ? item.subtitle.trim()
-                    : "TERABOX COLLECTION",
-            url: destination,
-            demo: item.demo === true
-        });
-    });
-
-    validBundles.sort((first, second) => {
-        return first.id - second.id;
-    });
-
-    if (validBundles.length === 0) {
-        throw new Error(
-            "No valid additional bundle links were found."
-        );
-    }
-
-    return validBundles;
-}
-
-function createMoreLinksInterface() {
-    const primaryGrid = document.querySelector(
-        ".bundle-section .bundle-grid"
-    );
-
-    if (
-        !primaryGrid
-        || document.getElementById("more-links-controls")
-    ) {
-        return null;
-    }
-
-    const controls = createElement(
-        "div",
-        "more-links-controls"
-    );
-
-    controls.id = "more-links-controls";
-
-    const moreButton = createElement(
-        "button",
-        "hero-button more-links-button"
-    );
-
-    moreButton.id = "more-links-button";
-    moreButton.type = "button";
-    moreButton.setAttribute("aria-expanded", "false");
-    moreButton.setAttribute(
-        "aria-controls",
-        "additional-bundle-grid"
-    );
-
-    const buttonIcon = createElement(
-        "span",
-        "more-links-button-icon",
-        "+"
-    );
-
-    buttonIcon.setAttribute("aria-hidden", "true");
-
-    const buttonText = createElement(
-        "span",
-        "more-links-button-text",
-        "SHOW MORE LINKS"
-    );
-
-    moreButton.append(buttonIcon, buttonText);
-
-    const loadingStatus = createElement(
-        "p",
-        "bundle-status more-links-status",
-        "Ten more demo links are available."
-    );
-
-    loadingStatus.id = "more-links-status";
-    loadingStatus.setAttribute("role", "status");
-    loadingStatus.setAttribute("aria-live", "polite");
-    loadingStatus.setAttribute("aria-atomic", "true");
-
-    const extraGrid = createElement(
-        "div",
-        "bundle-grid additional-bundle-grid"
-    );
-
-    extraGrid.id = "additional-bundle-grid";
-    extraGrid.setAttribute(
-        "aria-label",
-        "Additional TeraBox video bundle links"
-    );
-
-    extraGrid.hidden = true;
-    extraGrid.style.display = "none";
-
-    controls.append(moreButton, loadingStatus, extraGrid);
-    primaryGrid.insertAdjacentElement("afterend", controls);
-
-    return {
-        controls,
-        moreButton,
-        buttonIcon,
-        buttonText,
-        loadingStatus,
-        extraGrid
-    };
-}
-
-async function loadMoreBundles(interfaceElements) {
-    const {
-        moreButton,
-        buttonIcon,
-        buttonText,
-        loadingStatus,
-        extraGrid
-    } = interfaceElements;
-
-    if (
-        moreButton.dataset.loading === "true"
-        || moreButton.dataset.loaded === "true"
-    ) {
-        return;
-    }
-
-    moreButton.dataset.loading = "true";
-    moreButton.disabled = true;
-    moreButton.setAttribute("aria-busy", "true");
-
-    buttonIcon.textContent = "…";
-    buttonText.textContent = "LOADING MORE LINKS";
-
-    loadingStatus.textContent =
-        "Loading ten additional bundle links…";
-
-    loadingStatus.classList.remove("is-unavailable");
-
-    try {
-        const response = await fetch(MORE_BUNDLES_URL, {
-            method: "GET",
-            credentials: "same-origin",
-            headers: {
-                Accept: "application/json"
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#dceffa">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <title>TeraBox private video links | TeraBox XXX Videos</title>
+
+    <meta
+        name="description"
+        content="Explore TeraBox video bundles through a clean, fast and mobile-friendly directory with simple access instructions."
+    >
+
+    <meta
+        name="robots"
+        content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    >
+
+    <meta name="application-name" content="TeraBox Movie Zone">
+
+    <link rel="canonical" href="https://wal-katha.github.io/">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link
+        rel="icon"
+        href="/public/images/favicon.png"
+        type="image/png"
+    >
+    <link
+        rel="apple-touch-icon"
+        href="/public/images/favicon.png"
+    >
+    <link rel="stylesheet" href="/styles.css">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TeraBox Movie Zone">
+    <meta property="og:title" content="TeraBox Video Bundles">
+    <meta
+        property="og:description"
+        content="Explore TeraBox video bundles through a clean and mobile-friendly directory."
+    >
+    <meta property="og:url" content="https://wal-katha.github.io/">
+    <meta
+        property="og:image"
+        content="https://wal-katha.github.io/public/images/banner.jpg"
+    >
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="675">
+    <meta
+        property="og:image:alt"
+        content="TeraBox video bundle collection preview"
+    >
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TeraBox Video Bundles">
+    <meta
+        name="twitter:description"
+        content="Explore available TeraBox video bundles."
+    >
+    <meta
+        name="twitter:image"
+        content="https://wal-katha.github.io/public/images/banner.jpg"
+    >
+    <meta
+        name="twitter:image:alt"
+        content="TeraBox video bundle collection preview"
+    >
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "@id": "https://wal-katha.github.io/#website",
+                "url": "https://wal-katha.github.io/",
+                "name": "TeraBox XXX Videos",
+                "description": "A directory of external TeraBox xxx video bundle links.",
+                "inLanguage": "en"
+            },
+            {
+                "@type": "WebPage",
+                "@id": "https://wal-katha.github.io/#webpage",
+                "url": "https://wal-katha.github.io/",
+                "name": "TeraBox xxx Video Bundles",
+                "description": "Explore TeraBox video bundles and access instructions.",
+                "isPartOf": {
+                    "@id": "https://wal-katha.github.io/#website"
+                },
+                "primaryImageOfPage": {
+                    "@type": "ImageObject",
+                    "url": "https://wal-katha.github.io/public/images/banner.jpg",
+                    "width": 1200,
+                    "height": 675
+                },
+                "inLanguage": "en"
             }
-        });
-
-        if (!response.ok) {
-            throw new Error(
-                `Additional bundle request failed: ${response.status}`
-            );
-        }
-
-        const data = await response.json();
-        const bundles = validateMoreBundles(data);
-        const fragment = document.createDocumentFragment();
-
-        bundles.forEach((bundle) => {
-            fragment.appendChild(
-                createExtraBundleElement(bundle)
-            );
-        });
-
-        extraGrid.replaceChildren(fragment);
-        extraGrid.hidden = false;
-        extraGrid.style.removeProperty("display");
-
-        moreButton.dataset.loaded = "true";
-        moreButton.setAttribute("aria-expanded", "true");
-
-        loadingStatus.textContent =
-            `${bundles.length} additional demo bundle links loaded.`;
-
-        moreButton.remove();
-
-        const firstExtraLink = extraGrid.querySelector(
-            ".bundle-button:not(.is-disabled)"
-        );
-
-        if (firstExtraLink instanceof HTMLElement) {
-            firstExtraLink.focus({
-                preventScroll: true
-            });
-
-            firstExtraLink.scrollIntoView({
-                behavior: window.matchMedia(
-                    "(prefers-reduced-motion: reduce)"
-                ).matches
-                    ? "auto"
-                    : "smooth",
-                block: "center"
-            });
-        }
-
-        secureExternalLinks();
-    } catch (error) {
-        console.error("Unable to load more bundles:", error);
-
-        loadingStatus.textContent =
-            "The additional links could not be loaded. Please try again.";
-
-        loadingStatus.classList.add("is-unavailable");
-
-        moreButton.disabled = false;
-        moreButton.removeAttribute("aria-busy");
-
-        buttonIcon.textContent = "↻";
-        buttonText.textContent = "TRY AGAIN";
-    } finally {
-        moreButton.dataset.loading = "false";
+        ]
     }
-}
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">
+        Skip to main content
+    </a>
 
-function configureMoreLinks() {
-    const interfaceElements = createMoreLinksInterface();
+    <main class="site-shell" id="main-content">
+        <header class="hero-header">
+            <div class="logo-ring">
+                <div class="logo-surface">
+                    <img
+                        src="/public/images/logo.png"
+                        width="184"
+                        height="184"
+                        alt="TeraBox Movie Zone logo"
+                        fetchpriority="high"
+                        decoding="async"
+                    >
+                </div>
+            </div>
 
-    if (!interfaceElements) {
-        return;
-    }
+            <h1>
+                TERABOX <span>XXX</span> VIDEOS
+            </h1>
 
-    interfaceElements.moreButton.addEventListener(
-        "click",
-        () => {
-            loadMoreBundles(interfaceElements);
-        }
-    );
-}
+            <p>
+                leaked videos, private videos, MMS links, pirated movies
+            </p>
 
-function secureExternalLinks() {
-    const links = document.querySelectorAll(
-        'a[target="_blank"]'
-    );
+            <a class="hero-button" href="#bundles">
+                EXPLORE private videos Links
+            </a>
+        </header>
 
-    links.forEach((link) => {
-        const relValues = new Set(
-            (link.getAttribute("rel") || "")
-                .split(/\s+/)
-                .filter(Boolean)
-        );
+        <section
+            class="video-showcase"
+            aria-labelledby="showcase-title"
+        >
+            <h2 id="showcase-title">5000+ VIDEOS READY</h2>
 
-        relValues.add("noopener");
-        relValues.add("noreferrer");
-        relValues.add("external");
+            <a
+                class="preview-window"
+                href="#bundles"
+                aria-label="Explore available video bundles"
+            >
+                <img
+                    src="/public/images/banner.jpg"
+                    width="1200"
+                    height="675"
+                    alt="Preview of available TeraBox video collections"
+                    fetchpriority="high"
+                    decoding="async"
+                >
 
-        link.setAttribute(
-            "rel",
-            Array.from(relValues).join(" ")
-        );
-    });
-}
+                <span class="preview-shade" aria-hidden="true"></span>
 
-function updateCopyrightYear() {
-    const yearElement = document.getElementById(
-        "current-year"
-    );
+                <span class="play-button" aria-hidden="true">
+                    <span class="play-triangle"></span>
+                </span>
+            </a>
+        </section>
 
-    if (!yearElement) {
-        return;
-    }
+        <section class="features" aria-label="Directory features">
+            <article class="feature">
+                <span class="feature-icon" aria-hidden="true"></span>
+                <strong>Direct</strong>
+                <span>Access</span>
+            </article>
 
-    const currentYear = new Date().getFullYear();
+            <article class="feature">
+                <span class="feature-icon" aria-hidden="true"></span>
+                <strong>Clean</strong>
+                <span>Directory</span>
+            </article>
 
-    yearElement.textContent = String(
-        Math.max(2026, currentYear)
-    );
-}
+            <article class="feature">
+                <span class="feature-icon" aria-hidden="true"></span>
+                <strong>High-Speed</strong>
+                <span>Navigation</span>
+            </article>
 
-function configureAccessGuide() {
-    const launcher = document.getElementById(
-        "help-launcher"
-    );
+            <article class="feature">
+                <span class="feature-icon" aria-hidden="true"></span>
+                <strong>Exclusive</strong>
+                <span>Content</span>
+            </article>
+        </section>
 
-    const dialog = document.getElementById(
-        "access-guide-dialog"
-    );
+        <section
+            class="rating"
+            aria-label="User rating"
+            aria-describedby="promotional-disclosure"
+        >
+            <span
+                class="rating-stars"
+                aria-label="Approximately 4.8 out of 5 stars"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span class="partial-star"></span>
+            </span>
 
-    const closeButton = document.getElementById(
-        "access-dialog-close"
-    );
+            <strong>4.8/5 (9,800+)</strong>
 
-    const doneButton = document.getElementById(
-        "access-dialog-done"
-    );
+            <span class="verified-badge">
+                <span class="verified-check" aria-hidden="true"></span>
+                VERIFIED
+            </span>
+        </section>
 
-    if (
-        !(launcher instanceof HTMLButtonElement)
-        || !(dialog instanceof HTMLDialogElement)
-    ) {
-        return;
-    }
+        <aside
+            class="promotional-disclosure"
+            id="promotional-disclosure"
+            aria-label="Promotional information notice"
+        >
+            Ratings, counts, availability and promotional labels shown on
+            this page are publisher-supplied information and are not presented
+            as independently audited consumer-review data.
+        </aside>
 
-    let shouldRestoreLauncherFocus = false;
+        <section
+            class="bundle-section"
+            id="bundles"
+            aria-labelledby="bundle-title"
+        >
+            <h2 class="section-title" id="bundle-title">
+                EXPLORE OUR leaked videos BUNDLES
+            </h2>
 
-    function openGuide() {
-        shouldRestoreLauncherFocus = true;
+            <p
+                class="bundle-status"
+                id="bundle-status"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+            >
+                Checking available bundle links
+            </p>
 
-        if (typeof dialog.showModal === "function") {
-            dialog.showModal();
-        } else {
-            dialog.setAttribute("open", "");
-        }
+            <div
+                class="bundle-grid"
+                aria-label="TeraBox video bundles"
+            >
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="1"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">01</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 1</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-        document.body.classList.add("dialog-is-open");
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="2"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">02</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 2</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-        if (closeButton instanceof HTMLButtonElement) {
-            closeButton.focus();
-        }
-    }
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="3"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">03</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 3</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-    function closeGuide(options = {}) {
-        const {
-            scrollToBundles = false
-        } = options;
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="4"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">04</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 4</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-        if (
-            dialog.open
-            && typeof dialog.close === "function"
-        ) {
-            dialog.close();
-        } else {
-            dialog.removeAttribute("open");
-            document.body.classList.remove(
-                "dialog-is-open"
-            );
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="5"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">05</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 5</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-            if (shouldRestoreLauncherFocus) {
-                launcher.focus();
-            }
-        }
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="6"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">06</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 6</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-        if (scrollToBundles) {
-            const bundles = document.getElementById(
-                "bundles"
-            );
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="7"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">07</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 7</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-            if (bundles) {
-                window.setTimeout(() => {
-                    bundles.scrollIntoView({
-                        behavior: window.matchMedia(
-                            "(prefers-reduced-motion: reduce)"
-                        ).matches
-                            ? "auto"
-                            : "smooth",
-                        block: "start"
-                    });
-                }, 50);
-            }
-        }
-    }
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="8"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">08</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 8</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-    launcher.addEventListener("click", openGuide);
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="9"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">09</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 9</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
 
-    if (closeButton) {
-        closeButton.addEventListener("click", () => {
-            closeGuide();
-        });
-    }
+                <a
+                    class="bundle-button is-disabled"
+                    aria-disabled="true"
+                    data-bundle="10"
+                >
+                    <span class="live-dot" aria-hidden="true"></span>
+                    <span class="bundle-icon" aria-hidden="true">10</span>
+                    <span class="bundle-copy">
+                        <strong>VIEW BUNDLE 10</strong>
+                        <small>TERABOX COLLECTION</small>
+                    </span>
+                </a>
+            </div>
 
-    if (doneButton) {
-        doneButton.addEventListener("click", () => {
-            closeGuide({
-                scrollToBundles: true
-            });
-        });
-    }
+            <a
+                class="download-button"
+                href="https://play.google.com/store/apps/details?id=com.dubox.drive"
+                target="_blank"
+                rel="noopener noreferrer external"
+            >
+                <span class="download-icon" aria-hidden="true"></span>
+                <strong>DOWNLOAD OFFICIAL TERABOX APP</strong>
+                <span class="external-icon" aria-hidden="true"></span>
+            </a>
+        </section>
 
-    dialog.addEventListener("click", (event) => {
-        if (event.target === dialog) {
-            closeGuide();
-        }
-    });
+        <section
+            class="information-card"
+            aria-labelledby="instructions-title"
+        >
+            <h2 id="instructions-title">INSTRUCTIONS FOR ACCESS</h2>
 
-    dialog.addEventListener("cancel", () => {
-        document.body.classList.remove(
-            "dialog-is-open"
-        );
-    });
+            <ol>
+                <li>
+                    Install the official TeraBox application from a trusted
+                    app store.
+                </li>
+                <li>
+                    Create or sign in to your TeraBox account.
+                </li>
+                <li>
+                    Return to this website and select an available bundle.
+                </li>
+                <li>
+                    Allow time for large video collections to load.
+                </li>
+                <li>
+                    Save or download only content you are permitted to use.
+                </li>
+            </ol>
+        </section>
 
-    dialog.addEventListener("close", () => {
-        document.body.classList.remove(
-            "dialog-is-open"
-        );
+        <section
+            class="information-card"
+            id="about"
+            aria-labelledby="about-title"
+        >
+            <h2 id="about-title">ABOUT THIS DIRECTORY</h2>
 
-        if (shouldRestoreLauncherFocus) {
-            launcher.focus({
-                preventScroll: true
-            });
-        }
+            <p>
+                TeraBox Movie Zone is a directory of links leading to
+                third-party TeraBox pages. Files are not stored or served
+                directly by this website.
+            </p>
 
-        shouldRestoreLauncherFocus = false;
-    });
-}
+            <p>
+                Availability is controlled by the destination service or the
+                original uploader. External links may change or become
+                unavailable.
+            </p>
+        </section>
 
-function initializeApplication() {
-    configurePrimaryBundleLinks();
-    configureMoreLinks();
-    secureExternalLinks();
-    updateCopyrightYear();
-    configureAccessGuide();
-}
+        <section
+            class="information-card"
+            id="disclaimer"
+            aria-labelledby="disclaimer-title"
+        >
+            <h2 id="disclaimer-title">IMPORTANT DISCLAIMER</h2>
 
-if (document.readyState === "loading") {
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeApplication,
-        {
-            once: true
-        }
-    );
-} else {
-    initializeApplication();
-}
+            <p>
+                This website is not owned by, endorsed by or officially
+                affiliated with TeraBox. TeraBox and related trademarks belong
+                to their respective owners.
+            </p>
 
-/* APP_SCRIPT_COMPLETE */
+            <p>
+                Do not upload, access or distribute illegal, infringing,
+                non-consensual or underage material.
+            </p>
+        </section>
+
+        <nav class="tag-list" aria-label="Page navigation">
+            <a href="#bundles">#terabox-videos</a>
+            <a href="#instructions-title">#access-guide</a>
+            <a href="#about">#about</a>
+            <a href="#disclaimer">#disclaimer</a>
+        </nav>
+
+        <nav
+            class="footer-legal-links"
+            aria-label="Legal and support pages"
+        >
+            <a href="/privacy-policy.html">Privacy Policy</a>
+            <a href="/terms.html">Terms</a>
+            <a href="/disclaimer.html">Disclaimer</a>
+            <a href="/copyright-policy.html">Copyright</a>
+            <a href="/cookie-policy.html">Cookies</a>
+            <a href="/accessibility.html">Accessibility</a>
+            <a href="/contact.html">Contact</a>
+        </nav>
+
+        <footer class="site-footer">
+            <p>
+                © <span id="current-year">2026</span>
+                TeraBox XXX Videos.
+            </p>
+            <p>
+                Independent TeraBox link directory.
+            </p>
+        </footer>
+    </main>
+
+    <button
+        class="help-launcher"
+        id="help-launcher"
+        type="button"
+        aria-haspopup="dialog"
+        aria-controls="access-guide-dialog"
+        aria-label="Open the video access guide"
+    >
+        <span class="help-launcher-pulse" aria-hidden="true"></span>
+
+        <span class="help-launcher-icon" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+
+        <span class="help-launcher-label">
+            How to watch
+        </span>
+
+        <span class="help-notification" aria-hidden="true">1</span>
+    </button>
+
+    <dialog
+        class="access-dialog"
+        id="access-guide-dialog"
+        aria-labelledby="access-dialog-title"
+        aria-describedby="access-dialog-introduction"
+    >
+        <div class="access-dialog-panel">
+            <header class="access-dialog-header">
+                <div class="access-dialog-heading">
+                    <span
+                        class="access-dialog-logo"
+                        aria-hidden="true"
+                    >
+                        <img
+                            src="/public/images/logo.png"
+                            width="58"
+                            height="58"
+                            alt=""
+                        >
+                    </span>
+
+                    <div>
+                        <span class="access-dialog-eyebrow">
+                            QUICK START GUIDE
+                        </span>
+                        <h2 id="access-dialog-title">
+                            How to watch the videos
+                        </h2>
+                    </div>
+                </div>
+
+                <button
+                    class="access-dialog-close"
+                    id="access-dialog-close"
+                    type="button"
+                    aria-label="Close the video access guide"
+                >
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+
+            <div class="access-dialog-body">
+                <p
+                    class="access-dialog-introduction"
+                    id="access-dialog-introduction"
+                >
+                    Follow these steps to open a bundle, allow the collection
+                    to load and save or download permitted videos through
+                    TeraBox.
+                </p>
+
+                <ol class="access-steps">
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            1
+                        </span>
+
+                        <div>
+                            <h3>Download the official TeraBox app</h3>
+                            <p>
+                                Install TeraBox from a trusted official app
+                                store before opening a video bundle.
+                            </p>
+
+                            <a
+                                class="dialog-download-button"
+                                href="https://play.google.com/store/apps/details?id=com.dubox.drive"
+                                target="_blank"
+                                rel="noopener noreferrer external"
+                            >
+                                <span aria-hidden="true">↓</span>
+                                Download TeraBox
+                                <span aria-hidden="true">↗</span>
+                            </a>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            2
+                        </span>
+
+                        <div>
+                            <h3>Create your account</h3>
+                            <p>
+                                Open the TeraBox app and create an account
+                                using your email address, or sign in if you
+                                already have an account.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            3
+                        </span>
+
+                        <div>
+                            <h3>Check your available storage</h3>
+                            <p>
+                                TeraBox currently advertises up to 1,024 GB
+                                (1 TB) of free cloud storage for free users.
+                                The storage, features and eligibility shown in
+                                your app may vary by account, region and the
+                                current TeraBox terms.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            4
+                        </span>
+
+                        <div>
+                            <h3>Select a bundle</h3>
+                            <p>
+                                Return to this website and select any available
+                                bundle button. The link will open the external
+                                TeraBox destination in a new tab.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            5
+                        </span>
+
+                        <div>
+                            <h3>Continue in TeraBox</h3>
+                            <p>
+                                If the TeraBox app is installed and your device
+                                supports app links, the destination may open in
+                                the app automatically. Otherwise, follow the
+                                browser prompt to continue in TeraBox.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            6
+                        </span>
+
+                        <div>
+                            <h3>Wait for the collection to load</h3>
+                            <p>
+                                A collection containing 5000+ videos may take
+                                some time to load. Loading speed depends on
+                                your connection, device and the TeraBox
+                                service.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="access-step-number" aria-hidden="true">
+                            7
+                        </span>
+
+                        <div>
+                            <h3>Save or download permitted videos</h3>
+                            <p>
+                                After the collection loads, use the options
+                                provided by TeraBox to save permitted videos
+                                to your account or download them when the
+                                uploader, platform and applicable law allow it.
+                            </p>
+                        </div>
+                    </li>
+                </ol>
+
+                <aside class="access-safety-notice">
+                    <strong>Important:</strong>
+                    Review the destination before opening a file. Do not save,
+                    download or share illegal, infringing, non-consensual or
+                    underage material. Never enter your password anywhere
+                    except the verified TeraBox app or official TeraBox
+                    website.
+                </aside>
+            </div>
+
+            <footer class="access-dialog-footer">
+                <button
+                    class="access-dialog-done"
+                    id="access-dialog-done"
+                    type="button"
+                >
+                    Got it — show bundles
+                </button>
+            </footer>
+        </div>
+    </dialog>
+
+    <noscript>
+        <div class="noscript-message">
+            JavaScript is disabled. Bundle availability and the interactive
+            access guide cannot be displayed.
+        </div>
+    </noscript>
+
+    <script src="/app.js" defer></script>
+</body>
+</html>
