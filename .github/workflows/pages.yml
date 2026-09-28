@@ -1,4 +1,4 @@
-name: Deploy static site to GitHub Pages
+name: Validate and deploy static site to GitHub Pages
 
 on:
   push:
@@ -10,11 +10,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
+  group: github-pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  validate:
+    name: Validate site
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -22,10 +23,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Validate source files
+      - name: Validate required files
         shell: bash
         run: |
           set -euo pipefail
@@ -47,60 +45,157 @@ jobs:
 
           for file in "${required_files[@]}"; do
             if [[ ! -f "$file" ]]; then
-              echo "Missing required file: $file"
+              echo "::error::Missing required file: $file"
               exit 1
             fi
           done
 
+          echo "All required files are present."
+
+      - name: Validate HTML, JSON, XML, CSS and URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+
           python3 - <<'PY'
           import json
+          import re
           import xml.etree.ElementTree as ET
           from html.parser import HTMLParser
           from pathlib import Path
 
-          class StrictHTMLParser(HTMLParser):
-              pass
+          SITE_URL = "https://wal-katha.github.io/"
+
+          class SiteHTMLParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.ids = set()
+                  self.duplicate_ids = set()
+
+              def handle_starttag(self, tag, attrs):
+                  attributes = dict(attrs)
+                  element_id = attributes.get("id")
+
+                  if element_id:
+                      if element_id in self.ids:
+                          self.duplicate_ids.add(element_id)
+                      self.ids.add(element_id)
 
           for filename in ("index.html", "404.html"):
-              content = Path(filename).read_text(encoding="utf-8")
-              parser = StrictHTMLParser()
+              path = Path(filename)
+              content = path.read_text(encoding="utf-8")
+
+              if "<!doctype html>" not in content.lower():
+                  raise SystemExit(f"{filename}: missing HTML doctype")
+
+              if "</html>" not in content.lower():
+                  raise SystemExit(f"{filename}: missing closing html tag")
+
+              parser = SiteHTMLParser()
               parser.feed(content)
               parser.close()
 
-              if "</html>" not in content.lower():
+              if parser.duplicate_ids:
                   raise SystemExit(
-                      f"{filename} is incomplete: missing </html>"
+                      f"{filename}: duplicate IDs: "
+                      f"{sorted(parser.duplicate_ids)}"
                   )
+
+          index = Path("index.html").read_text(encoding="utf-8")
+
+          required_index_values = (
+              '<link rel="canonical" href="' + SITE_URL + '">',
+              '<meta name="rating" content="adult">',
+              'lang="en"',
+              'id="main-content"',
+          )
+
+          for value in required_index_values:
+              if value not in index:
+                  raise SystemExit(
+                      f"index.html: missing required value: {value}"
+                  )
+
+          if 'AggregateRating' in index:
+              raise SystemExit(
+                  "Do not publish AggregateRating markup without "
+                  "verifiable first-party rating records."
+              )
 
           css = Path("styles.css").read_text(encoding="utf-8")
 
           if "/* SITE_STYLES_COMPLETE */" not in css:
-              raise SystemExit("styles.css is incomplete")
+              raise SystemExit("styles.css: completion marker missing")
 
           if css.count("{") != css.count("}"):
-              raise SystemExit(
-                  "styles.css contains unmatched braces"
-              )
+              raise SystemExit("styles.css: unmatched braces")
 
           javascript = Path("app.js").read_text(encoding="utf-8")
 
           if "/* APP_SCRIPT_COMPLETE */" not in javascript:
-              raise SystemExit("app.js is incomplete")
+              raise SystemExit("app.js: completion marker missing")
 
-          with Path("manifest.webmanifest").open(
-              encoding="utf-8"
-          ) as file:
-              json.load(file)
+          with Path("manifest.webmanifest").open(encoding="utf-8") as file:
+              manifest = json.load(file)
 
-          ET.parse("sitemap.xml")
+          if manifest.get("start_url") != "/":
+              raise SystemExit("manifest: start_url must be /")
 
-          print(
-              "HTML, CSS, JavaScript, JSON and XML "
-              "validation passed."
-          )
+          sitemap = ET.parse("sitemap.xml")
+          root = sitemap.getroot()
+
+          namespace = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+          locations = [
+              element.text
+              for element in root.findall(".//sm:loc", namespace)
+          ]
+
+          if locations != [SITE_URL]:
+              raise SystemExit(
+                  "sitemap.xml must contain only the canonical homepage URL"
+              )
+
+          robots = Path("robots.txt").read_text(encoding="utf-8")
+
+          if f"Sitemap: {SITE_URL}sitemap.xml" not in robots:
+              raise SystemExit("robots.txt: sitemap URL mismatch")
+
+          print("Repository validation passed.")
           PY
 
           node --check app.js
+
+      - name: Warn about unconfigured bundle links
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if grep -q '1: ""' app.js; then
+            echo "::warning::Bundle URLs are not configured in app.js."
+            echo "::warning::Buttons will remain safely disabled."
+          fi
+
+  deploy:
+    name: Deploy site
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
       - name: Prepare deployment directory
         shell: bash
@@ -121,31 +216,14 @@ jobs:
           cp .nojekyll _site/.nojekyll
 
           cp public/images/logo.png \
-             _site/public/images/logo.png
-
-          cp public/images/banner.jpg \
-             _site/public/images/banner.jpg
-
-          cp public/images/favicon.png \
-             _site/public/images/favicon.png
-
-          cmp index.html _site/index.html
-          cmp styles.css _site/styles.css
-          cmp app.js _site/app.js
-
-          cmp \
-            public/images/logo.png \
             _site/public/images/logo.png
 
-          cmp \
-            public/images/banner.jpg \
+          cp public/images/banner.jpg \
             _site/public/images/banner.jpg
 
-          cmp \
-            public/images/favicon.png \
+          cp public/images/favicon.png \
             _site/public/images/favicon.png
 
-          echo "Deployment directory prepared successfully."
           find _site -maxdepth 3 -type f -print
 
       - name: Upload GitHub Pages artifact
@@ -153,20 +231,6 @@ jobs:
         with:
           path: _site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    permissions:
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
