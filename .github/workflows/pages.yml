@@ -55,7 +55,7 @@ jobs:
             "googlee91a7f05558ef324.html"
             ".nojekyll"
             "public/images/logo.png"
-            "public/images/banner.jpg"
+            "public/images/banner.png"
             "public/images/favicon.png"
           )
 
@@ -761,14 +761,8 @@ jobs:
                   )
 
           validate_png("public/images/logo.png")
+          validate_png("public/images/banner.png")
           validate_png("public/images/favicon.png")
-
-          banner = Path("public/images/banner.jpg").read_bytes()
-
-          if not banner.startswith(b"\xff\xd8"):
-              raise SystemExit(
-                  "public/images/banner.jpg: invalid JPEG signature"
-              )
 
           print(
               "HTML, canonical URLs, internal links, XML sitemap, "
@@ -834,8 +828,8 @@ jobs:
             "_site/public/images/logo.png"
 
           cp \
-            "public/images/banner.jpg" \
-            "_site/public/images/banner.jpg"
+            "public/images/banner.png" \
+            "_site/public/images/banner.png"
 
           cp \
             "public/images/favicon.png" \
@@ -846,6 +840,9 @@ jobs:
           test -s "_site/robots.txt"
           test -s "_site/googlee91a7f05558ef324.html"
           test -f "_site/.nojekyll"
+          test -s "_site/public/images/logo.png"
+          test -s "_site/public/images/banner.png"
+          test -s "_site/public/images/favicon.png"
 
           echo "Deployment directory:"
           find _site -type f -print | sort
