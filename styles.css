@@ -681,8 +681,43 @@ a {
     text-decoration: none;
 }
 
+.footer-legal-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 13px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
+    padding-top: 23px;
+    border-top: 1px solid rgba(48, 100, 129, 0.17);
+}
+
+.footer-legal-links a {
+    display: inline-flex;
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 2px;
+    color: #234d65;
+    font-size: clamp(0.68rem, 2.7vw, 0.82rem);
+    font-weight: 800;
+    line-height: 1.2;
+    text-decoration: none;
+}
+
+.footer-legal-links a:hover {
+    color: #075f94;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.footer-legal-links a:focus-visible {
+    border-radius: 4px;
+}
+
 .site-footer {
-    padding: 36px 0 4px;
+    padding: 23px 0 4px;
     color: #385c70;
     text-align: center;
 }
@@ -745,6 +780,16 @@ a {
     .bundle-icon {
         width: 40px;
     }
+
+    .footer-legal-links {
+        gap: 6px 11px;
+        margin-top: 26px;
+        padding-top: 20px;
+    }
+
+    .footer-legal-links a {
+        font-size: 0.7rem;
+    }
 }
 
 @media (max-width: 355px) {
@@ -776,6 +821,14 @@ a {
         width: 35px;
         font-size: 0.67rem;
     }
+
+    .footer-legal-links {
+        gap: 4px 9px;
+    }
+
+    .footer-legal-links a {
+        font-size: 0.65rem;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -804,7 +857,8 @@ a {
     .hero-button,
     .download-button,
     .bundle-grid,
-    .tag-list {
+    .tag-list,
+    .footer-legal-links {
         display: none;
     }
 }
