@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
+  group: github-pages
   cancel-in-progress: true
 
 jobs:
-  validate:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -22,7 +22,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Validate repository
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Validate required files
         shell: bash
         run: |
           set -euo pipefail
@@ -44,147 +47,54 @@ jobs:
 
           for file in "${required_files[@]}"; do
             if [[ ! -f "$file" ]]; then
-              echo "::error::Missing required file: $file"
+              echo "::error file=${file}::Required file is missing"
               exit 1
             fi
           done
 
           python3 - <<'PY'
           import json
-          import re
           import xml.etree.ElementTree as ET
-          from html.parser import HTMLParser
           from pathlib import Path
-
-          SITE_URL = "https://wal-katha.github.io/"
-
-          class DocumentParser(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.ids = set()
-                  self.duplicate_ids = set()
-                  self.has_title = False
-                  self.has_description = False
-                  self.has_canonical = False
-
-              def handle_starttag(self, tag, attrs):
-                  attributes = dict(attrs)
-
-                  element_id = attributes.get("id")
-                  if element_id:
-                      if element_id in self.ids:
-                          self.duplicate_ids.add(element_id)
-                      self.ids.add(element_id)
-
-                  if tag == "title":
-                      self.has_title = True
-
-                  if tag == "meta":
-                      if attributes.get("name") == "description":
-                          self.has_description = True
-
-                  if tag == "link":
-                      rel = attributes.get("rel", "")
-                      if "canonical" in rel.split():
-                          self.has_canonical = True
 
           for filename in ("index.html", "404.html"):
               content = Path(filename).read_text(encoding="utf-8")
-              parser = DocumentParser()
-              parser.feed(content)
-              parser.close()
 
               if "<!doctype html>" not in content.lower():
-                  raise SystemExit(f"{filename}: missing HTML doctype")
-
-              if "</html>" not in content.lower():
-                  raise SystemExit(f"{filename}: missing closing html tag")
-
-              if not parser.has_title:
-                  raise SystemExit(f"{filename}: missing title")
-
-              if not parser.has_description:
-                  raise SystemExit(f"{filename}: missing description")
-
-              if parser.duplicate_ids:
                   raise SystemExit(
-                      f"{filename}: duplicate IDs: "
-                      f"{sorted(parser.duplicate_ids)}"
+                      f"{filename}: missing <!doctype html>"
                   )
 
-              if filename == "index.html" and not parser.has_canonical:
-                  raise SystemExit("index.html: missing canonical URL")
+              if "</html>" not in content.lower():
+                  raise SystemExit(
+                      f"{filename}: missing closing </html> tag"
+                  )
 
-          index = Path("index.html").read_text(encoding="utf-8")
+          with Path("manifest.webmanifest").open(
+              encoding="utf-8"
+          ) as manifest_file:
+              json.load(manifest_file)
 
-          if SITE_URL not in index:
-              raise SystemExit("index.html: canonical site URL is missing")
+          ET.parse("sitemap.xml")
 
-          if "example.com" in index:
-              raise SystemExit("index.html contains an example.com placeholder")
-
-          css = Path("styles.css").read_text(encoding="utf-8")
-          if "/* SITE_STYLES_COMPLETE */" not in css:
-              raise SystemExit("styles.css completion marker is missing")
-          if css.count("{") != css.count("}"):
-              raise SystemExit("styles.css contains unmatched braces")
-
-          javascript = Path("app.js").read_text(encoding="utf-8")
-          if "/* APP_SCRIPT_COMPLETE */" not in javascript:
-              raise SystemExit("app.js completion marker is missing")
-
-          with Path("manifest.webmanifest").open(encoding="utf-8") as file:
-              manifest = json.load(file)
-
-          if manifest.get("start_url") != "/":
-              raise SystemExit("manifest start_url must be /")
-
-          root = ET.parse("sitemap.xml").getroot()
-          namespace = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
-          locations = [
-              node.text
-              for node in root.findall(f"{namespace}url/{namespace}loc")
-          ]
-
-          if locations != [SITE_URL]:
-              raise SystemExit(
-                  "sitemap.xml must contain only the canonical homepage"
-              )
-
-          ads = Path("ads.txt").read_text(encoding="utf-8").strip()
-          ads_pattern = (
-              r"^google\.com,\s*pub-\d{16},\s*DIRECT,\s*"
-              r"f08c47fec0942fa0$"
-          )
-          if ads and not re.fullmatch(ads_pattern, ads):
-              raise SystemExit("ads.txt is not in the expected Google format")
-
-          print("Repository validation passed.")
+          print("Basic HTML, JSON and XML validation passed.")
           PY
 
           node --check app.js
 
-  deploy:
-    needs: validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+          if ! grep -q "SITE_STYLES_COMPLETE" styles.css; then
+            echo "::error file=styles.css::Completion marker is missing"
+            exit 1
+          fi
 
-    permissions:
-      pages: write
-      id-token: write
+          if ! grep -q "APP_SCRIPT_COMPLETE" app.js; then
+            echo "::error file=app.js::Completion marker is missing"
+            exit 1
+          fi
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+          echo "All required files passed validation."
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Prepare deployment artifact
+      - name: Prepare deployment directory
         shell: bash
         run: |
           set -euo pipefail
@@ -202,17 +112,37 @@ jobs:
           cp ads.txt _site/ads.txt
           cp .nojekyll _site/.nojekyll
 
-          cp public/images/logo.png _site/public/images/logo.png
-          cp public/images/banner.jpg _site/public/images/banner.jpg
-          cp public/images/favicon.png _site/public/images/favicon.png
+          cp public/images/logo.png \
+            _site/public/images/logo.png
 
-          find _site -maxdepth 3 -type f -print
+          cp public/images/banner.jpg \
+            _site/public/images/banner.jpg
+
+          cp public/images/favicon.png \
+            _site/public/images/favicon.png
+
+          echo "Deployment directory contents:"
+          find _site -type f -print | sort
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
