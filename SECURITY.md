@@ -23,7 +23,7 @@ repository's **Security** tab and select **Report a vulnerability**.
 
 Repository security page:
 
-https://github.com/wal-katha/wal-katha.github.io/security
+https://github.com/Ewchandana33/teraboxlinks/security
 
 ### Public issue warning
 
@@ -46,7 +46,8 @@ If private reporting is unavailable, open a public issue containing only:
 
 Issue page:
 
-https://github.com/wal-katha/wal-katha.github.io/issues/new
+
+[https://github.com/Ewchandana33/teraboxlinks/issues/new](https://github.com/Ewchandana33/teraboxlinks/issues/new)
 
 ## Malicious or Illegal External Material
 
@@ -81,7 +82,7 @@ risks should be prioritized.
 
 This policy applies to:
 
-- `https://wal-katha.github.io/`;
+- `[https://teraboxlinks.pages.dev/](https://teraboxlinks.pages.dev/)`;
 - source files in this repository;
 - the GitHub Pages deployment workflow;
 - external links published by the website.
