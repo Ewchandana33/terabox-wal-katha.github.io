@@ -1,8 +1,8 @@
 {
     "id": "/",
-    "name": "TeraBox XXX Videos",
-    "short_name": "TeraBox Video Link",
-    "description": "Your global hub for TeraBox private videos content and external bundle links.",
+    "name": "terabox video link",
+    "short_name": "terabox viral video",
+    "description": "Your global hub for terabox viral video content and external bundle links.",
     "lang": "en",
     "dir": "ltr",
     "start_url": "/",
