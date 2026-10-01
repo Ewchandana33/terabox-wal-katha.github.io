@@ -1,8 +1,8 @@
 https://teraboxlinks.pages.dev/
-https://teraboxlinks.pages.dev/privacy-policy.html
-https://teraboxlinks.pages.dev/terms.html
-https://teraboxlinks.pages.dev/disclaimer.html
-https://teraboxlinks.pages.dev/copyright-policy.html
-https://teraboxlinks.pages.dev/cookie-policy.html
-https://teraboxlinks.pages.dev/accessibility.html
-https://teraboxlinks.pages.dev/contact.html
+https://teraboxlinks.pages.dev/privacy-policy
+https://teraboxlinks.pages.dev/terms
+https://teraboxlinks.pages.dev/disclaimer
+https://teraboxlinks.pages.dev/copyright-policy
+https://teraboxlinks.pages.dev/cookie-policy
+https://teraboxlinks.pages.dev/accessibility
+https://teraboxlinks.pages.dev/contact
