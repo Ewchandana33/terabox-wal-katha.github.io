@@ -1,27 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>https://wal-katha.github.io/</loc>
+        <loc>https://teraboxlinks.pages.dev/</loc>
+        <lastmod>2026-10-01</lastmod>
     </url>
     <url>
-        <loc>https://wal-katha.github.io/privacy-policy.html</loc>
+        <loc>https://teraboxlinks.pages.dev/privacy-policy</loc>
+        <lastmod>2026-10-01</lastmod>
     </url>
     <url>
-        <loc>https://wal-katha.github.io/terms.html</loc>
+        <loc>https://teraboxlinks.pages.dev/terms</loc>
+        <lastmod>2026-10-01</lastmod>
     </url>
     <url>
-        <loc>https://wal-katha.github.io/disclaimer.html</loc>
+        <loc>https://teraboxlinks.pages.dev/disclaimer</loc>
+        <lastmod>2026-10-01</lastmod>
     </url>
     <url>
-        <loc>https://wal-katha.github.io/copyright-policy.html</loc>
+        <loc>https://teraboxlinks.pages.dev/copyright-policy</loc>
+        <lastmod>2026-10-01</lastmod>
     </url>
     <url>
-        <loc>https://wal-katha.github.io/cookie-policy.html</loc>
+        <loc>https://teraboxlinks.pages.dev/cookie-policy</loc>
+        <lastmod>2026-10-01</lastmod>
     </url>
     <url>
-        <loc>https://wal-katha.github.io/accessibility.html</loc>
+        <loc>https://teraboxlinks.pages.dev/accessibility</loc>
+        <lastmod>2026-10-01</lastmod>
     </url>
     <url>
-        <loc>https://wal-katha.github.io/contact.html</loc>
+        <loc>https://teraboxlinks.pages.dev/contact</loc>
+        <lastmod>2026-10-01</lastmod>
     </url>
 </urlset>
