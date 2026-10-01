@@ -9,8 +9,8 @@
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait",
-    "background_color": "#d8eef9",
-    "theme_color": "#dceffa",
+    "background_color": "#020202",
+    "theme_color": "#050505",
     "categories": [
         "entertainment"
     ],
