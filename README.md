@@ -1,19 +1,19 @@
 <div align="center">
 
   <!-- Main Banner Header -->
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0d47a1&height=220&section=header&text=TERABOX%205000%20VIDEOS%20COLLECTION&fontSize=32&fontAlignY=38&desc=10%20Packs%20%7C%20500%20Videos%20Per%20Link%20%7C%20Fast%20Access&descAlignY=62&descSize=16&fontColor=ffffff" width="100%" alt="TeraBox Shared Video Collection Banner"/>
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0d47a1&height=220&section=header&text=TERABOX%20VIDEO%20LINKS%20COLLECTION&fontSize=32&fontAlignY=38&desc=10%20Packs%20%7C%20About%20470%20Videos%20Per%20Link%20%7C%20Fast%20Access&descAlignY=62&descSize=16&fontColor=ffffff" width="100%" alt="TeraBox Shared Video Collection Banner"/>
 
   <br/>
 
   <!-- Status Badges -->
-  <img src="https://img.shields.io/badge/Total_Videos-5000+-red?style=for-the-badge&logo=youtube" alt="Total Videos Badge" />
+  <img src="https://img.shields.io/badge/Total_Videos-4600+-red?style=for-the-badge&logo=youtube" alt="Total Videos Badge" />
   <img src="https://img.shields.io/badge/Total_Packs-10_Folders-0d47a1?style=for-the-badge&logo=terabox" alt="Total Packs Badge" />
   <img src="https://img.shields.io/badge/Status-Active_Links-brightgreen?style=for-the-badge" alt="Status Active Badge" />
 
   <br/><br/>
 
   <!-- Main H1 Title -->
-  <h1>📂 TeraBox Shared Video Links Collection (5000+ Videos)</h1>
+  <h1>📂 TeraBox Shared Video Links Collection (10 Packs)</h1>
   <p><b>⚠️ IMPORTANT: Please Follow the Instructions Below Before Opening Any Links!</b></p>
 
 </div>
@@ -83,7 +83,7 @@ TeraBox is a secure, official cloud storage application used by millions worldwi
 ---
 
 ### ℹ️ Features & Access Guide
-* **Total Media Volume:** 10 curated folders containing over 5,000 video files.
+* **Total Media Volume:** 10 curated folders containing over 4,600 video files.
 * **Smart App Detection:** Clicking **Open in App** automatically launches the TeraBox application on mobile devices.
 * **Direct Cloud Save:** Save videos directly to your own account to watch offline anytime.
 
@@ -91,3 +91,8 @@ TeraBox is a secure, official cloud storage application used by millions worldwi
 
 ### 🔍 Related Topics & Search Queries
 Looking for **terabox video links**, **terabox shared links**, **terabox folder direct link**, **terabox cloud storage**, **watch terabox online**, or **terabox app download**? All links above provide direct access to verified video collections.
+---
+
+### 📚 Guides
+
+New to TeraBox? Read the [setup guide](https://teraboxlinks.pages.dev/terabox-guide), the [troubleshooting guide](https://teraboxlinks.pages.dev/troubleshooting) and the [safety guide](https://teraboxlinks.pages.dev/safety-guide) before opening any link.
