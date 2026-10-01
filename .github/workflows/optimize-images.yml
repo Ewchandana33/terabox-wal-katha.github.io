@@ -1,0 +1,642 @@
+name: Convert images to WebP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.png"
+      - "**.PNG"
+      - "**.jpg"
+      - "**.JPG"
+      - "**.jpeg"
+      - "**.JPEG"
+      - "**.html"
+      - "**.css"
+      - ".github/workflows/optimize-images.yml"
+  workflow_dispatch:
+    inputs:
+      force_reconvert:
+        description: "Re-create every generated WebP file"
+        type: boolean
+        default: false
+      force_alt_on_decorative:
+        description: "Also replace empty alt attributes on converted images"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: optimize-images-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  optimize:
+    name: Convert PNG and JPG images to WebP
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ALT_TEXT: "terabox video links"
+      WEBP_QUALITY: "82"
+      MAX_DIMENSION: "1200"
+      FORCE_RECONVERT: ${{ inputs.force_reconvert || 'false' }}
+      FORCE_ALT_ON_DECORATIVE: ${{ inputs.force_alt_on_decorative || 'false' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check "pillow>=11,<13"
+
+      - name: Convert images and update references
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          #!/usr/bin/env python3
+          """Convert PNG/JPEG images to WebP and update site references."""
+          import hashlib
+          import html
+          import io
+          import json
+          import os
+          import re
+          import sys
+          from pathlib import Path
+          from urllib.parse import unquote, urlsplit
+
+          from PIL import Image, ImageOps
+
+          Image.MAX_IMAGE_PIXELS = 300_000_000
+
+          ROOT = Path.cwd().resolve()
+          STATE_PATH = ROOT / ".github" / "image-optimizer-state.json"
+          SKIP_DIRS = {"node_modules", "_site", "dist", "build", "__pycache__"}
+          SOURCE_EXTS = {".png", ".jpg", ".jpeg"}
+          EXCLUDE_NAME = re.compile(
+              r"(favicon|apple-touch-icon|touch-icon|maskable|(^|[-_.])icon([-_.]|$))",
+              re.I,
+          )
+          MIN_DIM = 480
+          SCALE_FACTOR = 3
+
+
+          def env_int(name, default, low, high):
+              try:
+                  value = int(os.environ.get(name, str(default)))
+              except ValueError:
+                  return default
+              return value if low <= value <= high else default
+
+
+          def env_bool(name):
+              return os.environ.get(name, "false").strip().lower() == "true"
+
+
+          ALT_TEXT = os.environ.get("ALT_TEXT", "").strip() or "terabox video links"
+          ALT_ESCAPED = html.escape(ALT_TEXT, quote=True)
+          QUALITY = env_int("WEBP_QUALITY", 82, 40, 100)
+          MAX_DIM = env_int("MAX_DIMENSION", 1200, 200, 8000)
+          FORCE_ALT = env_bool("FORCE_ALT_ON_DECORATIVE")
+          FORCE_RECONVERT = env_bool("FORCE_RECONVERT")
+
+          warnings = []
+          report_rows = []
+          file_changes = []
+
+
+          def warn(message):
+              warnings.append(message)
+              print("::warning::" + message)
+
+
+          def walk_files():
+              for dirpath, dirnames, filenames in os.walk(ROOT):
+                  dirnames[:] = sorted(
+                      d for d in dirnames
+                      if not d.startswith(".") and d not in SKIP_DIRS
+                  )
+                  for name in sorted(filenames):
+                      yield Path(dirpath) / name
+
+
+          def rel_of(path):
+              return path.relative_to(ROOT).as_posix()
+
+
+          def webp_rel(rel):
+              return str(Path(rel).with_suffix(".webp").as_posix())
+
+
+          def sha256_of(path):
+              digest = hashlib.sha256()
+              with open(path, "rb") as handle:
+                  for chunk in iter(lambda: handle.read(1 << 20), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+
+          def valid_webp(path):
+              try:
+                  with open(path, "rb") as handle:
+                      head = handle.read(12)
+                  if len(head) < 12 or head[:4] != b"RIFF" or head[8:12] != b"WEBP":
+                      return False
+                  with Image.open(path) as image:
+                      image.verify()
+                  return True
+              except Exception:
+                  return False
+
+
+          def human(size):
+              value = float(size)
+              for unit in ("B", "KiB", "MiB", "GiB"):
+                  if value < 1024 or unit == "GiB":
+                      return f"{value:.1f} {unit}" if unit != "B" else f"{int(value)} B"
+                  value /= 1024
+              return f"{size} B"
+
+
+          # ---------------------------------------------------------------- HTML helpers
+
+          IMG_TAG = re.compile(r"<img\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*>", re.I)
+          SOURCE_TAG = re.compile(r"<source\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*>", re.I)
+          LINK_TAG = re.compile(r"<link\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*>", re.I)
+          ATTR_RE = re.compile(
+              r"(?P<pre>\s+)(?P<name>[^\s\"'<>/=]+)"
+              r"(?:\s*=\s*(?:\"(?P<dq>[^\"]*)\"|'(?P<sq>[^']*)'|(?P<uq>[^\s\"'<>`]+)))?"
+          )
+          URL_FN = re.compile(
+              r"url\(\s*(?P<q>[\"']?)(?P<u>[^\"')]+?)(?P=q)\s*\)", re.I
+          )
+          RASTER_REF = re.compile(r"\.(?:png|jpe?g)((?:[?#].*)?)$", re.I)
+          WEBP_REF = re.compile(r"\.webp(?:[?#].*)?$", re.I)
+
+
+          def find_attr(tag, name):
+              for match in ATTR_RE.finditer(tag):
+                  if match.group("name").lower() == name:
+                      return match
+              return None
+
+
+          def attr_value(match):
+              if match is None:
+                  return None
+              for key in ("dq", "sq", "uq"):
+                  if match.group(key) is not None:
+                      return match.group(key)
+              return None
+
+
+          def replace_attr(tag, name, value):
+              match = find_attr(tag, name)
+              if match is None:
+                  return tag
+              quote = "'" if match.group("sq") is not None else '"'
+              if quote == '"':
+                  value = value.replace('"', "&quot;")
+              else:
+                  value = value.replace("'", "&#39;")
+              new = f"{match.group('pre')}{match.group('name')}={quote}{value}{quote}"
+              return tag[:match.start()] + new + tag[match.end():]
+
+
+          def parse_width(value):
+              if value is None:
+                  return None
+              found = re.fullmatch(r"\s*(\d+)\s*(?:px)?\s*", value)
+              return int(found.group(1)) if found else None
+
+
+          def resolve_ref(ref, base_dir):
+              ref = ref.strip()
+              if not ref or ref.startswith(("#", "data:", "//", "mailto:", "tel:", "javascript:")):
+                  return None
+              parts = urlsplit(ref)
+              if parts.scheme or parts.netloc:
+                  return None
+              path = unquote(parts.path)
+              if not path:
+                  return None
+              target = ROOT / path.lstrip("/") if path.startswith("/") else base_dir / path
+              try:
+                  return target.resolve().relative_to(ROOT).as_posix()
+              except (ValueError, OSError):
+                  return None
+
+
+          def rewrite_srcset(value, fn):
+              if "data:" in value:
+                  return value, False
+              entries = []
+              changed = False
+              for part in value.split(","):
+                  part = part.strip()
+                  if not part:
+                      continue
+                  bits = part.split(None, 1)
+                  new = fn(bits[0], None)
+                  if new and new != bits[0]:
+                      bits[0] = new
+                      changed = True
+                  entries.append(" ".join(bits))
+              return ", ".join(entries), changed
+
+
+          def apply_alt(tag):
+              match = find_attr(tag, "alt")
+              if match is None:
+                  return tag[:4] + f' alt="{ALT_ESCAPED}"' + tag[4:]
+              current = (attr_value(match) or "").strip()
+              role = (attr_value(find_attr(tag, "role")) or "").strip().lower()
+              hidden = (attr_value(find_attr(tag, "aria-hidden")) or "").strip().lower()
+              decorative = current == "" or role in ("presentation", "none") or hidden == "true"
+              if decorative and not FORCE_ALT:
+                  return tag
+              if html.unescape(current) == ALT_TEXT:
+                  return tag
+              return replace_attr(tag, "alt", ALT_ESCAPED)
+
+
+          def sync_type(tag, changed):
+              if not changed:
+                  return tag
+              match = find_attr(tag, "type")
+              if match and (attr_value(match) or "").strip().lower() in (
+                  "image/png", "image/jpeg", "image/jpg"
+              ):
+                  return replace_attr(tag, "type", "image/webp")
+              return tag
+
+
+          def sub_urls(text, fn):
+              def repl(match):
+                  ref = match.group("u")
+                  new = fn(ref, None)
+                  if new and new != ref:
+                      whole = match.group(0)
+                      start = match.start("u") - match.start(0)
+                      end = match.end("u") - match.start(0)
+                      return whole[:start] + new + whole[end:]
+                  return match.group(0)
+
+              return URL_FN.sub(repl, text)
+
+
+          def transform_html(text, fn, set_alt, managed=None):
+              def do_img(match):
+                  tag = match.group(0)
+                  changed = False
+                  src = attr_value(find_attr(tag, "src"))
+                  if src:
+                      width = parse_width(attr_value(find_attr(tag, "width")))
+                      new = fn(src, width)
+                      if new and new != src:
+                          tag = replace_attr(tag, "src", new)
+                          changed = True
+                  srcset = attr_value(find_attr(tag, "srcset"))
+                  if srcset:
+                      new_set, did = rewrite_srcset(srcset, fn)
+                      if did:
+                          tag = replace_attr(tag, "srcset", new_set)
+                          changed = True
+                  forced = bool(
+                      set_alt and FORCE_ALT and managed and src and managed(src)
+                  )
+                  if set_alt and (changed or forced):
+                      tag = apply_alt(tag)
+                  return tag
+
+              def do_source(match):
+                  tag = match.group(0)
+                  srcset = attr_value(find_attr(tag, "srcset"))
+                  if not srcset:
+                      return tag
+                  new_set, did = rewrite_srcset(srcset, fn)
+                  if not did:
+                      return tag
+                  return sync_type(replace_attr(tag, "srcset", new_set), True)
+
+              def do_link(match):
+                  tag = match.group(0)
+                  as_value = (attr_value(find_attr(tag, "as")) or "").strip().lower()
+                  rel_value = (attr_value(find_attr(tag, "rel")) or "").lower().split()
+                  if as_value != "image" or "preload" not in rel_value:
+                      return tag
+                  href = attr_value(find_attr(tag, "href"))
+                  if not href:
+                      return tag
+                  new = fn(href, None)
+                  if new and new != href:
+                      return sync_type(replace_attr(tag, "href", new), True)
+                  return tag
+
+              text = IMG_TAG.sub(do_img, text)
+              text = SOURCE_TAG.sub(do_source, text)
+              text = LINK_TAG.sub(do_link, text)
+              return sub_urls(text, fn)
+
+
+          # ---------------------------------------------------------------- conversion
+
+          def convert_image(src, dst, limit_width):
+              """Return (status, info). status is 'ok' or 'skip'."""
+              tmp_lossy = dst.with_name(dst.name + ".lossy.tmp")
+              tmp_lossless = dst.with_name(dst.name + ".lossless.tmp")
+              try:
+                  orig_size = src.stat().st_size
+                  with Image.open(src) as image:
+                      if image.format == "PNG" and getattr(image, "n_frames", 1) > 1:
+                          return "skip", "animated PNG"
+                      image.load()
+                      work = ImageOps.exif_transpose(image)
+                      work.load()
+                      orig_w, orig_h = work.size
+                      scale = min(1.0, limit_width / orig_w, MAX_DIM / max(orig_w, orig_h))
+                      if scale < 1.0:
+                          work = work.resize(
+                              (max(1, round(orig_w * scale)), max(1, round(orig_h * scale))),
+                              Image.Resampling.LANCZOS,
+                          )
+                      has_alpha = (
+                          work.mode in ("RGBA", "LA", "PA")
+                          or "transparency" in work.info
+                      )
+                      icc = work.info.get("icc_profile")
+                      work = work.convert("RGBA" if has_alpha else "RGB")
+                      if icc:
+                          try:
+                              from PIL import ImageCms
+
+                              source_profile = ImageCms.ImageCmsProfile(io.BytesIO(icc))
+                              description = ImageCms.getProfileDescription(source_profile)
+                              if "srgb" not in description.lower():
+                                  work = ImageCms.profileToProfile(
+                                      work,
+                                      source_profile,
+                                      ImageCms.createProfile("sRGB"),
+                                      outputMode=work.mode,
+                                  )
+                          except Exception:
+                              pass
+                      new_w, new_h = work.size
+                      work.save(tmp_lossy, format="WEBP", quality=QUALITY, method=6)
+                      best = tmp_lossy
+                      best_size = tmp_lossy.stat().st_size
+                      lossless = False
+                      if src.suffix.lower() == ".png" and best_size >= orig_size:
+                          work.save(
+                              tmp_lossless, format="WEBP", lossless=True, quality=100, method=6
+                          )
+                          lossless_size = tmp_lossless.stat().st_size
+                          if lossless_size < best_size:
+                              best, best_size, lossless = tmp_lossless, lossless_size, True
+                  info = {
+                      "orig_size": orig_size,
+                      "new_size": best_size,
+                      "orig_dim": f"{orig_w}x{orig_h}",
+                      "new_dim": f"{new_w}x{new_h}",
+                      "lossless": lossless,
+                  }
+                  if best_size >= orig_size and not dst.exists():
+                      return "skip", "WebP would not be smaller than the original"
+                  os.replace(best, dst)
+                  return "ok", info
+              finally:
+                  for temp in (tmp_lossy, tmp_lossless):
+                      if temp.exists():
+                          temp.unlink()
+
+
+          def read_text(path):
+              try:
+                  with open(path, encoding="utf-8", newline="") as handle:
+                      return handle.read()
+              except (UnicodeDecodeError, OSError) as error:
+                  warn(f"Could not read {rel_of(path)}: {error}")
+                  return None
+
+
+          def main():
+              all_files = list(walk_files())
+              sources = [
+                  p for p in all_files
+                  if p.suffix.lower() in SOURCE_EXTS and not EXCLUDE_NAME.search(p.stem)
+              ]
+              doc_files = [p for p in all_files if p.suffix.lower() in (".html", ".htm", ".css")]
+              source_rels = sorted(rel_of(p) for p in sources)
+              print(f"Found {len(source_rels)} convertible image(s) and {len(doc_files)} HTML/CSS file(s).")
+
+              documents = {}
+              for path in doc_files:
+                  text = read_text(path)
+                  if text is not None:
+                      documents[path] = text
+
+              usage = {}
+              webp_to_source = {webp_rel(rel): rel for rel in source_rels}
+
+              def note_usage(rel, width):
+                  if rel in usage and usage[rel] is None:
+                      return
+                  if width is None:
+                      usage[rel] = None
+                      return
+                  usage[rel] = max(usage.get(rel, 0), width)
+
+              for path, text in documents.items():
+                  base = path.parent
+
+                  def observe(ref, width, base=base):
+                      rel = resolve_ref(ref, base)
+                      if rel and RASTER_REF.search(ref):
+                          note_usage(rel, width)
+                      elif rel and WEBP_REF.search(ref) and rel in webp_to_source:
+                          note_usage(webp_to_source[rel], width)
+                      return None
+
+                  if path.suffix.lower() in (".html", ".htm"):
+                      transform_html(text, observe, False)
+                  else:
+                      sub_urls(text, observe)
+
+              state = {"version": 1, "images": {}}
+              if STATE_PATH.is_file():
+                  try:
+                      loaded = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+                      if isinstance(loaded, dict) and isinstance(loaded.get("images"), dict):
+                          state = {"version": 1, "images": loaded["images"]}
+                  except (json.JSONDecodeError, OSError):
+                      warn("image-optimizer-state.json is invalid and will be rebuilt.")
+              old_images = state["images"]
+              new_images = {}
+
+              groups = {}
+              for rel in source_rels:
+                  groups.setdefault(webp_rel(rel), []).append(rel)
+              blocked = set()
+              for target, members in groups.items():
+                  if len(members) > 1:
+                      blocked.update(members)
+                      warn(f"Name collision, skipped: {', '.join(members)} would all become {target}")
+
+              usable = {}
+              for rel in source_rels:
+                  if rel in blocked:
+                      continue
+                  src = ROOT / rel
+                  dst = ROOT / webp_rel(rel)
+                  try:
+                      width = usage.get(rel)
+                      limit = MAX_DIM if not width else min(MAX_DIM, max(MIN_DIM, width * SCALE_FACTOR))
+                      params = f"q{QUALITY}-w{limit}-m{MAX_DIM}"
+                      digest = sha256_of(src)
+                      entry = old_images.get(rel)
+                      if dst.exists() and entry is None:
+                          usable[rel] = webp_rel(rel)
+                          report_rows.append((rel, "existing WebP kept", "-", "-", "-"))
+                          continue
+                      if (
+                          dst.exists() and entry and not FORCE_RECONVERT
+                          and entry.get("sha256") == digest
+                          and entry.get("params") == params
+                          and valid_webp(dst)
+                      ):
+                          usable[rel] = webp_rel(rel)
+                          new_images[rel] = entry
+                          report_rows.append((rel, "up to date", "-", "-", "-"))
+                          continue
+                      status, info = convert_image(src, dst, limit)
+                      if status == "ok":
+                          usable[rel] = webp_rel(rel)
+                          new_images[rel] = {"sha256": digest, "params": params}
+                          saving = 100 - round(100 * info["new_size"] / info["orig_size"])
+                          report_rows.append((
+                              rel,
+                              f"converted {info['orig_dim']} -> {info['new_dim']}",
+                              human(info["orig_size"]),
+                              human(info["new_size"]),
+                              f"{saving}%",
+                          ))
+                      else:
+                          report_rows.append((rel, f"skipped: {info}", "-", "-", "-"))
+                  except Exception as error:
+                      warn(f"Could not convert {rel}: {error}")
+                      report_rows.append((rel, "failed (original kept)", "-", "-", "-"))
+
+              def rewriter(base):
+                  def fn(ref, width):
+                      rel = resolve_ref(ref, base)
+                      if rel and rel in usable and RASTER_REF.search(ref):
+                          return RASTER_REF.sub(r".webp\1", ref)
+                      return None
+                  return fn
+
+              for path, text in documents.items():
+                  fn = rewriter(path.parent)
+                  if path.suffix.lower() in (".html", ".htm"):
+                      def managed(ref, base=path.parent):
+                          rel = resolve_ref(ref, base)
+                          return bool(rel and WEBP_REF.search(ref) and rel in webp_to_source)
+
+                      new_text = transform_html(text, fn, True, managed)
+                  else:
+                      new_text = sub_urls(text, fn)
+                  if new_text != text:
+                      with open(path, "w", encoding="utf-8", newline="") as handle:
+                          handle.write(new_text)
+                      documents[path] = new_text
+                      file_changes.append(rel_of(path))
+
+              errors = []
+              for path, text in documents.items():
+                  base = path.parent
+
+                  def check(ref, width, base=base, path=path):
+                      if WEBP_REF.search(ref):
+                          rel = resolve_ref(ref, base)
+                          if rel and (not (ROOT / rel).is_file() or not valid_webp(ROOT / rel)):
+                              errors.append(f"{rel_of(path)} references a missing or invalid WebP: {ref}")
+                      return None
+
+                  if path.suffix.lower() in (".html", ".htm"):
+                      transform_html(text, check, False)
+                  else:
+                      sub_urls(text, check)
+              if errors:
+                  for message in sorted(set(errors)):
+                      print("::error::" + message)
+                  sys.exit(1)
+
+              state_text = json.dumps(
+                  {"version": 1, "images": dict(sorted(new_images.items()))},
+                  indent=2, sort_keys=True,
+              ) + "\n"
+              current = STATE_PATH.read_text(encoding="utf-8") if STATE_PATH.is_file() else None
+              if current != state_text:
+                  STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+                  STATE_PATH.write_text(state_text, encoding="utf-8")
+
+              lines = ["## WebP image optimizer", ""]
+              lines.append(f"Alt text applied to converted images: `{ALT_TEXT}`")
+              lines.append("")
+              if report_rows:
+                  lines += ["| Image | Result | Original | WebP | Saved |", "|---|---|---|---|---|"]
+                  lines += [f"| `{a}` | {b} | {c} | {d} | {e} |" for a, b, c, d, e in report_rows]
+              else:
+                  lines.append("No PNG/JPG images found.")
+              lines.append("")
+              lines.append("Updated files: " + (", ".join(f"`{f}`" for f in file_changes) or "none"))
+              for message in warnings:
+                  lines.append(f"- Warning: {message}")
+              summary = "\n".join(lines) + "\n"
+              print(summary)
+              target = os.environ.get("GITHUB_STEP_SUMMARY")
+              if target:
+                  with open(target, "a", encoding="utf-8") as handle:
+                      handle.write(summary)
+
+
+          if __name__ == "__main__":
+              main()
+          PY
+
+      - name: Commit and push changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No image changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(images): convert images to WebP and update references"
+          for attempt in 1 2 3 4 5; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "Changes pushed."
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt). Rebasing on the latest remote state."
+            if ! git pull --rebase origin "${GITHUB_REF_NAME}"; then
+              git rebase --abort || true
+              echo "::error::Rebase conflict. Re-run this workflow after the newer push finishes."
+              exit 1
+            fi
+            sleep $((attempt * 3))
+          done
+          echo "::error::Could not push after 5 attempts."
+          exit 1
