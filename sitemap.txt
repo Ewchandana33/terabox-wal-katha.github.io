@@ -6,3 +6,9 @@ https://teraboxlinks.pages.dev/copyright-policy
 https://teraboxlinks.pages.dev/cookie-policy
 https://teraboxlinks.pages.dev/accessibility
 https://teraboxlinks.pages.dev/contact
+https://teraboxlinks.pages.dev/guides
+https://teraboxlinks.pages.dev/terabox-guide
+https://teraboxlinks.pages.dev/troubleshooting
+https://teraboxlinks.pages.dev/safety-guide
+https://teraboxlinks.pages.dev/faq
+https://teraboxlinks.pages.dev/about
