@@ -2,26 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1, viewport-fit=cover"
     >
-
-    <meta name="color-scheme" content="light">
-    <meta name="theme-color" content="#dceffa">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#050505">
     <meta name="robots" content="noindex, follow">
-
     <title>404 | terabox video link</title>
-
     <meta
         name="description"
         content="The requested page could not be found."
     >
-
     <link rel="icon" href="/public/images/favicon.png" type="image/png">
     <link rel="stylesheet" href="/styles.css">
-
     <style>
         .error-page {
             display: grid;
@@ -29,71 +23,87 @@
             place-items: center;
             padding: 24px;
         }
-
         .error-card {
             width: min(100%, 520px);
             padding: clamp(30px, 8vw, 55px);
             text-align: center;
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(242, 251, 255, 0.94),
-                    rgba(191, 221, 235, 0.92)
-                );
-            border: 1px solid rgba(255, 255, 255, 0.9);
+            background: linear-gradient(145deg, #171717, #070707);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 34px;
             box-shadow:
-                14px 17px 32px rgba(51, 104, 133, 0.3),
-                -12px -12px 28px rgba(255, 255, 255, 0.9);
+                0 18px 34px rgba(0, 0, 0, 0.8),
+                0 0 24px rgba(240, 22, 36, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
-
         .error-logo {
             width: 130px;
             height: 130px;
             margin: 0 auto 18px;
-            padding: 8px;
-            object-fit: contain;
-            background: #ffffff;
-            border: 5px solid #168fcb;
+            padding: 6px;
+            object-fit: cover;
+            background:
+                linear-gradient(#090909, #090909) padding-box,
+                conic-gradient(
+                    from 210deg,
+                    #ffffff,
+                    #737373,
+                    #181818,
+                    #f01624,
+                    #4b4b4b,
+                    #ffffff
+                ) border-box;
+            border: 5px solid transparent;
             border-radius: 50%;
+            box-shadow:
+                0 14px 28px rgba(0, 0, 0, 0.9),
+                0 0 20px rgba(240, 22, 36, 0.16);
         }
-
         .error-code {
             margin: 0;
-            color: #0b5f91;
+            color: var(--red-bright);
             font-size: clamp(4rem, 18vw, 8rem);
             font-weight: 900;
             letter-spacing: -0.08em;
             line-height: 0.9;
+            text-shadow:
+                0 0 22px rgba(240, 22, 36, 0.45),
+                0 4px 6px #000000;
         }
-
         .error-card h1 {
             margin: 18px 0 0;
+            color: var(--white);
+            font-family: Georgia, "Times New Roman", serif;
             font-size: clamp(1.6rem, 6vw, 2.5rem);
         }
-
         .error-card p:not(.error-code) {
             margin: 13px 0 0;
-            color: #38566a;
+            color: var(--text-soft);
         }
-
         .home-button {
             display: inline-flex;
             min-height: 52px;
             align-items: center;
             justify-content: center;
             margin-top: 25px;
-            padding: 12px 24px;
-            color: #ffffff;
-            background: linear-gradient(145deg, #159ade, #096ca8);
+            padding: 12px 25px;
+            color: var(--white);
+            background: linear-gradient(145deg, #ff3341 0%, #c50b18 45%, #72050c 100%);
+            border: 1px solid rgba(255, 255, 255, 0.38);
             border-radius: 999px;
-            box-shadow: 0 10px 20px rgba(11, 99, 150, 0.27);
-            font-weight: 800;
+            box-shadow:
+                0 13px 25px rgba(0, 0, 0, 0.75),
+                0 0 18px rgba(240, 22, 36, 0.2),
+                inset 0 2px 1px rgba(255, 255, 255, 0.35),
+                inset 0 -3px 5px rgba(0, 0, 0, 0.43);
+            font-size: 0.9rem;
+            font-weight: 900;
             text-decoration: none;
+        }
+        .home-button:hover {
+            filter: brightness(1.12);
         }
     </style>
 </head>
-
 <body>
     <main class="error-page">
         <section class="error-card" aria-labelledby="error-title">
@@ -104,16 +114,12 @@
                 height="130"
                 alt="terabox video links"
             >
-
             <p class="error-code" aria-hidden="true">404</p>
-
             <h1 id="error-title">Page not found</h1>
-
             <p>
                 The requested page may have been removed, renamed or entered
                 incorrectly.
             </p>
-
             <a class="home-button" href="/">
                 Return to homepage
             </a>
