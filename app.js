@@ -28,53 +28,53 @@ const BUNDLE_LINKS = Object.freeze({
 const EXTRA_BUNDLE_LINKS = Object.freeze([
     Object.freeze({
         id: 11,
-        url: "https://example.com/?demo-bundle=11",
-        demo: true
+        url: "https://1024terabox.com/s/16iY4wSyZuoro4mUngPHTVg",
+        demo: false
     }),
     Object.freeze({
         id: 12,
-        url: "https://example.com/?demo-bundle=12",
-        demo: true
+        url: "https://1024terabox.com/s/11-THaHvBDzfp22RyqtmKyw",
+        demo: false
     }),
     Object.freeze({
         id: 13,
-        url: "https://example.com/?demo-bundle=13",
-        demo: true
+        url: "https://1024terabox.com/s/1GzqzS8ziGd4Qp8viQPn6og",
+        demo: false
     }),
     Object.freeze({
         id: 14,
-        url: "https://example.com/?demo-bundle=14",
-        demo: true
+        url: "https://1024terabox.com/s/1Mt7JOsuiLPKAXiDU2sEiDQ",
+        demo: false
     }),
     Object.freeze({
         id: 15,
-        url: "https://example.com/?demo-bundle=15",
-        demo: true
+        url: "https://1024terabox.com/s/1a9tTKMvhIWwzP8EpsrqXmQ",
+        demo: false
     }),
     Object.freeze({
         id: 16,
-        url: "https://example.com/?demo-bundle=16",
-        demo: true
+        url: "https://1024terabox.com/s/1v9eZAZgIpYIgqt7Vpm0UXA",
+        demo: false
     }),
     Object.freeze({
         id: 17,
-        url: "https://example.com/?demo-bundle=17",
-        demo: true
+        url: "https://1024terabox.com/s/1Sq7L1Lf3D3pZ4o88iSIpkw",
+        demo: false
     }),
     Object.freeze({
         id: 18,
-        url: "https://example.com/?demo-bundle=18",
-        demo: true
+        url: "https://1024terabox.com/s/1cB-F-H4TIc2zkmyHAr8kkw",
+        demo: false
     }),
     Object.freeze({
         id: 19,
-        url: "https://example.com/?demo-bundle=19",
-        demo: true
+        url: "https://1024terabox.com/s/1g_HttUwPaNeJCEeoTL8TUQ",
+        demo: false
     }),
     Object.freeze({
         id: 20,
-        url: "https://example.com/?demo-bundle=20",
-        demo: true
+        url: "https://1024terabox.com/s/1QkVlJjsOJixlH7zweY2igw",
+        demo: false
     })
 ]);
 function getValidatedHttpsUrl(value) {
