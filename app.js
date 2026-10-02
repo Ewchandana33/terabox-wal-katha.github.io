@@ -494,23 +494,107 @@ function configureAccessGuide() {
         shouldRestoreLauncherFocus = false;
     });
 }
-function initializeApplication() {
+/*
+ * Advertisement slots stay collapsed (no empty space) until an ad has
+ * actually rendered inside them. The ad code itself is never modified,
+ * delayed, refreshed or hidden once it is showing.
+ */
+function configureAdSlots() {
+    const slots = document.querySelectorAll("[data-ad-slot]");
+    slots.forEach((slot) => {
+        const frame = slot.querySelector(".ad-frame");
+        if (!frame) {
+            return;
+        }
+        let timer = 0;
+        function hasRenderedAd() {
+            const candidates = frame.querySelectorAll(
+                "iframe, img, video, a"
+            );
+            return Array.prototype.some.call(candidates, (node) => {
+                return node.offsetWidth >= 50 && node.offsetHeight >= 30;
+            });
+        }
+        function applyState() {
+            timer = 0;
+            const isReady = hasRenderedAd();
+            slot.classList.toggle("is-pending", !isReady);
+            slot.classList.toggle("is-ready", isReady);
+            if (isReady) {
+                slot.removeAttribute("inert");
+                slot.removeAttribute("aria-hidden");
+            } else {
+                slot.setAttribute("inert", "");
+                slot.setAttribute("aria-hidden", "true");
+            }
+        }
+        function scheduleCheck() {
+            if (timer) {
+                return;
+            }
+            timer = window.setTimeout(applyState, 120);
+        }
+        if (typeof MutationObserver === "function") {
+            new MutationObserver(scheduleCheck).observe(frame, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ["style", "class", "hidden", "width", "height"]
+            });
+        }
+        if (typeof ResizeObserver === "function") {
+            new ResizeObserver(scheduleCheck).observe(frame);
+        }
+        window.addEventListener("load", scheduleCheck);
+        [1000, 2500, 5000, 10000, 20000].forEach((delay) => {
+            window.setTimeout(scheduleCheck, delay);
+        });
+        applyState();
+    });
+}
+let coreInitialized = false;
+let remainingInitialized = false;
+function initializeCore() {
+    if (coreInitialized) {
+        return;
+    }
+    coreInitialized = true;
     configureDarkBrowserTheme();
     configurePrimaryBundleLinks();
     createMoreLinksInterface();
     secureExternalLinks();
+}
+function initializeRemaining() {
+    if (remainingInitialized) {
+        return;
+    }
+    remainingInitialized = true;
+    initializeCore();
+    secureExternalLinks();
     updateCopyrightYear();
     configureAccessGuide();
+    configureAdSlots();
 }
-if (document.readyState === "loading") {
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeApplication,
-        {
-            once: true
-        }
-    );
-} else {
-    initializeApplication();
+function initializeApplication() {
+    /*
+     * The bundle buttons are set up as soon as they exist in the page,
+     * without waiting for the whole document (and third-party ad scripts)
+     * to finish loading.
+     */
+    if (document.querySelector('[data-bundle="10"]')) {
+        initializeCore();
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initializeRemaining,
+            {
+                once: true
+            }
+        );
+    } else {
+        initializeRemaining();
+    }
 }
+initializeApplication();
 /* APP_SCRIPT_COMPLETE */
