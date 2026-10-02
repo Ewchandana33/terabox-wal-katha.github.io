@@ -261,18 +261,27 @@ function createMoreLinksInterface() {
                 ></div>
             </div>
             <footer class="extra-dialog-footer">
-                <button
-                    class="close-extra-links-button"
-                    id="close-extra-links"
-                    type="button"
+                <a
+                    class="extra-dialog-play"
+                    href="https://play.google.com/store/apps/details?id=com.dubox.drive"
+                    target="_blank"
+                    rel="noopener noreferrer external"
+                    aria-label="Download the official TeraBox app on Google Play (opens in a new tab)"
                 >
-                    <span aria-hidden="true">×</span>
-                    <span>
-                        <strong>CLOSE EXTRA LINKS</strong>
-                        <small>BACK TO THE MAIN BUNDLES</small>
+                    <span class="extra-dialog-play-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="24" height="24" focusable="false">
+                            <polygon points="4,2.2 12,12 4,21.8" fill="#00C3FF"/>
+                            <polygon points="4,2.2 12,12 15.5,9.03" fill="#00F076"/>
+                            <polygon points="4,21.8 12,12 15.5,14.97" fill="#FF3A44"/>
+                            <polygon points="12,12 15.5,9.03 20.5,12 15.5,14.97" fill="#FFD500"/>
+                        </svg>
                     </span>
-                    <span aria-hidden="true">⌃</span>
-                </button>
+                    <span class="extra-dialog-play-copy">
+                        <small>DOWNLOAD THE OFFICIAL APP</small>
+                        <strong>TeraBox on Google Play</strong>
+                    </span>
+                    <span class="extra-dialog-play-arrow" aria-hidden="true">↗</span>
+                </a>
             </footer>
         </div>
     `;
@@ -282,7 +291,6 @@ function createMoreLinksInterface() {
     });
     document.body.append(dialog);
     const topCloseButton = dialog.querySelector("#extra-dialog-x");
-    const bottomCloseButton = dialog.querySelector("#close-extra-links");
     const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)"
     );
@@ -341,7 +349,6 @@ function createMoreLinksInterface() {
     }
     showButton.addEventListener("click", openExtraBundles);
     topCloseButton.addEventListener("click", closeExtraBundles);
-    bottomCloseButton.addEventListener("click", closeExtraBundles);
     dialog.addEventListener("click", (event) => {
         if (event.target === dialog) {
             closeExtraBundles();
