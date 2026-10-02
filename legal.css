@@ -8,7 +8,7 @@
     --red: #f01624;
     --red-bright: #ff3341;
     --red-dark: #8d0711;
-    --page-width: 760px;
+    --legal-max: 980px;
     --silver-shadow:
         0 14px 24px rgba(0, 0, 0, 0.75),
         0 4px 7px rgba(0, 0, 0, 0.8),
@@ -106,13 +106,17 @@ a:hover {
 }
 .legal-shell {
     position: relative;
-    width: min(100%, var(--page-width));
+    width: 100%;
     min-height: 100vh;
-    margin-inline: auto;
-    padding:
-        max(22px, env(safe-area-inset-top))
-        clamp(16px, 5vw, 42px)
-        max(40px, env(safe-area-inset-bottom));
+    min-height: 100dvh;
+    margin: 0;
+    padding-top: max(22px, env(safe-area-inset-top));
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
+    padding-inline: max(
+        clamp(16px, 5vw, 42px),
+        calc((100% - var(--legal-max)) / 2),
+        env(safe-area-inset-left)
+    );
     overflow: hidden;
     background:
         radial-gradient(
@@ -120,16 +124,16 @@ a:hover {
             rgba(255, 255, 255, 0.07),
             transparent 28%
         ),
+        radial-gradient(
+            ellipse at 100% 60%,
+            rgba(240, 22, 36, 0.06),
+            transparent 40%
+        ),
         linear-gradient(
             180deg,
             rgba(14, 14, 14, 0.98),
             rgba(2, 2, 2, 0.99)
         );
-    border-inline: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow:
-        0 0 55px rgba(0, 0, 0, 0.95),
-        inset 1px 0 rgba(255, 255, 255, 0.035),
-        inset -1px 0 rgba(255, 255, 255, 0.035);
 }
 .legal-shell::before,
 .legal-shell::after {
@@ -144,11 +148,11 @@ a:hover {
 }
 .legal-shell::before {
     top: 60px;
-    left: -260px;
+    left: -180px;
     background: rgba(255, 255, 255, 0.08);
 }
 .legal-shell::after {
-    right: -260px;
+    right: -180px;
     bottom: 230px;
     background: rgba(240, 22, 36, 0.11);
 }
@@ -508,7 +512,6 @@ a:hover {
         transform: none;
     }
 }
-
 .breadcrumb {
     margin-top: 24px;
     color: var(--text-muted);
@@ -642,6 +645,27 @@ a:hover {
 @media (max-width: 560px) {
     .toc-list {
         columns: 1;
+    }
+}
+@media (min-width: 1100px) {
+    .guide-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media (min-width: 1800px) {
+    html {
+        font-size: 112.5%;
+    }
+    :root {
+        --legal-max: 1180px;
+    }
+}
+@media (min-width: 2400px) {
+    html {
+        font-size: 125%;
+    }
+    :root {
+        --legal-max: 1360px;
     }
 }
 /* LEGAL_STYLES_COMPLETE */
