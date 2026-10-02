@@ -151,8 +151,14 @@ function configurePrimaryBundleLinks() {
         status.classList.add("is-unavailable");
         return;
     }
+    const extraCount = EXTRA_BUNDLE_LINKS.filter((bundle) => {
+        return !bundle.demo && getValidatedHttpsUrl(bundle.url) !== null;
+    }).length;
+    const extraNote = extraCount > 0
+        ? ` ${extraCount} more inside Show More Links.`
+        : "";
     status.textContent =
-        `${availableCount} of ${links.length} bundles are available.`;
+        `${availableCount} of ${links.length} main bundles are available.${extraNote}`;
     status.classList.remove("is-unavailable");
 }
 function createExtraBundleElement(bundle) {
