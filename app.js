@@ -207,125 +207,147 @@ function createMoreLinksInterface() {
     if (!bundleSection || !primaryGrid) {
         return;
     }
-    if (document.getElementById("extra-bundles-panel")) {
+    if (document.getElementById("extra-bundles-dialog")) {
         return;
     }
+    const count = visibleExtraBundles.length;
     const controls = document.createElement("div");
     const showButton = document.createElement("button");
-    const extraPanel = document.createElement("section");
-    const heading = document.createElement("div");
-    const headingCopy = document.createElement("div");
-    const eyebrow = document.createElement("span");
-    const title = document.createElement("h3");
-    const description = document.createElement("p");
-    const extraGrid = document.createElement("div");
-    const bottomControls = document.createElement("div");
-    const closeButton = document.createElement("button");
     controls.className = "more-links-controls";
     showButton.className = "more-links-button";
     showButton.id = "show-more-links";
     showButton.type = "button";
+    showButton.setAttribute("aria-haspopup", "dialog");
     showButton.setAttribute("aria-expanded", "false");
-    showButton.setAttribute(
-        "aria-controls",
-        "extra-bundles-panel"
-    );
+    showButton.setAttribute("aria-controls", "extra-bundles-dialog");
     showButton.innerHTML = `
         <span class="more-links-symbol" aria-hidden="true">＋</span>
         <span>
             <strong>SHOW MORE LINKS</strong>
-            <small>OPEN ${visibleExtraBundles.length} EXTRA BUNDLES</small>
+            <small>OPEN ${count} EXTRA BUNDLES</small>
         </span>
-        <span class="more-links-arrow" aria-hidden="true">⌄</span>
+        <span class="more-links-arrow" aria-hidden="true">↗</span>
     `;
-    extraPanel.className = "extra-bundles-panel";
-    extraPanel.id = "extra-bundles-panel";
-    extraPanel.hidden = true;
-    extraPanel.setAttribute(
-        "aria-labelledby",
-        "extra-bundles-title"
-    );
-    heading.className = "extra-bundles-heading";
-    headingCopy.className = "extra-bundles-heading-copy";
-    eyebrow.className = "extra-bundles-eyebrow";
-    eyebrow.textContent = "ADDITIONAL COLLECTION";
-    title.id = "extra-bundles-title";
-    title.textContent = `${visibleExtraBundles.length} EXTRA BUNDLE LINKS`;
-    description.textContent =
-        "More bundle links from the same directory.";
-    headingCopy.append(eyebrow, title, description);
-    heading.append(headingCopy);
-    extraGrid.className = "bundle-grid extra-bundle-grid";
-    extraGrid.setAttribute(
-        "aria-label",
-        "Additional video bundle links"
-    );
+    controls.append(showButton);
+    primaryGrid.insertAdjacentElement("afterend", controls);
+    const dialog = document.createElement("dialog");
+    dialog.className = "extra-dialog";
+    dialog.id = "extra-bundles-dialog";
+    dialog.setAttribute("aria-labelledby", "extra-bundles-title");
+    dialog.setAttribute("aria-describedby", "extra-bundles-description");
+    dialog.innerHTML = `
+        <div class="extra-dialog-panel">
+            <header class="extra-dialog-header">
+                <button
+                    class="extra-dialog-x"
+                    id="extra-dialog-x"
+                    type="button"
+                    aria-label="Close the extra bundle links"
+                >
+                    <span aria-hidden="true">×</span>
+                </button>
+                <div class="extra-bundles-heading">
+                    <span class="extra-bundles-eyebrow">ADDITIONAL COLLECTION</span>
+                    <h3 id="extra-bundles-title" tabindex="-1">${count} EXTRA BUNDLE LINKS</h3>
+                    <p id="extra-bundles-description">
+                        More bundle links from the same directory.
+                    </p>
+                </div>
+            </header>
+            <div class="extra-dialog-body">
+                <div
+                    class="bundle-grid extra-bundle-grid"
+                    aria-label="Additional video bundle links"
+                ></div>
+            </div>
+            <footer class="extra-dialog-footer">
+                <button
+                    class="close-extra-links-button"
+                    id="close-extra-links"
+                    type="button"
+                >
+                    <span aria-hidden="true">×</span>
+                    <span>
+                        <strong>CLOSE EXTRA LINKS</strong>
+                        <small>BACK TO THE MAIN BUNDLES</small>
+                    </span>
+                    <span aria-hidden="true">⌃</span>
+                </button>
+            </footer>
+        </div>
+    `;
+    const extraGrid = dialog.querySelector(".extra-bundle-grid");
     visibleExtraBundles.forEach((bundle) => {
         extraGrid.append(createExtraBundleElement(bundle));
     });
-    bottomControls.className = "extra-bundles-bottom-controls";
-    closeButton.className = "close-extra-links-button";
-    closeButton.id = "close-extra-links";
-    closeButton.type = "button";
-    closeButton.innerHTML = `
-        <span aria-hidden="true">×</span>
-        <span>
-            <strong>CLOSE EXTRA LINKS</strong>
-            <small>HIDE THE ADDITIONAL BUNDLES</small>
-        </span>
-        <span aria-hidden="true">⌃</span>
-    `;
-    bottomControls.append(closeButton);
-    extraPanel.append(heading, extraGrid, bottomControls);
-    controls.append(showButton);
-    primaryGrid.insertAdjacentElement("afterend", controls);
-    controls.insertAdjacentElement("afterend", extraPanel);
+    document.body.append(dialog);
+    const topCloseButton = dialog.querySelector("#extra-dialog-x");
+    const bottomCloseButton = dialog.querySelector("#close-extra-links");
     const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)"
     );
+    let isClosing = false;
     function openExtraBundles() {
-        extraPanel.hidden = false;
-        showButton.hidden = true;
+        if (dialog.open) {
+            return;
+        }
+        isClosing = false;
+        dialog.classList.remove("is-closing");
+        if (typeof dialog.showModal === "function") {
+            dialog.showModal();
+        } else {
+            dialog.setAttribute("open", "");
+        }
+        document.body.classList.add("dialog-is-open");
         showButton.setAttribute("aria-expanded", "true");
-        window.requestAnimationFrame(() => {
-            extraPanel.classList.add("is-visible");
-        });
-        const extraTitle = document.getElementById(
-            "extra-bundles-title"
-        );
-        if (extraTitle) {
-            extraTitle.setAttribute("tabindex", "-1");
-            extraTitle.focus({
+        const body = dialog.querySelector(".extra-dialog-body");
+        if (body) {
+            body.scrollTop = 0;
+        }
+        if (topCloseButton instanceof HTMLButtonElement) {
+            topCloseButton.focus({
                 preventScroll: true
             });
         }
-        extraPanel.scrollIntoView({
-            behavior: reducedMotion.matches ? "auto" : "smooth",
-            block: "start"
-        });
+    }
+    function finishClosing() {
+        dialog.classList.remove("is-closing");
+        isClosing = false;
+        if (dialog.open && typeof dialog.close === "function") {
+            dialog.close();
+        } else {
+            dialog.removeAttribute("open");
+            handleClosed();
+        }
     }
     function closeExtraBundles() {
-        extraPanel.classList.remove("is-visible");
-        const finishClosing = () => {
-            extraPanel.hidden = true;
-            showButton.hidden = false;
-            showButton.setAttribute("aria-expanded", "false");
-            showButton.focus({
-                preventScroll: true
-            });
-            controls.scrollIntoView({
-                behavior: reducedMotion.matches ? "auto" : "smooth",
-                block: "center"
-            });
-        };
+        if (!dialog.open || isClosing) {
+            return;
+        }
         if (reducedMotion.matches) {
             finishClosing();
             return;
         }
-        window.setTimeout(finishClosing, 220);
+        isClosing = true;
+        dialog.classList.add("is-closing");
+        window.setTimeout(finishClosing, 190);
+    }
+    function handleClosed() {
+        document.body.classList.remove("dialog-is-open");
+        showButton.setAttribute("aria-expanded", "false");
+        showButton.focus({
+            preventScroll: true
+        });
     }
     showButton.addEventListener("click", openExtraBundles);
-    closeButton.addEventListener("click", closeExtraBundles);
+    topCloseButton.addEventListener("click", closeExtraBundles);
+    bottomCloseButton.addEventListener("click", closeExtraBundles);
+    dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+            closeExtraBundles();
+        }
+    });
+    dialog.addEventListener("close", handleClosed);
 }
 function secureExternalLinks() {
     const links = document.querySelectorAll('a[target="_blank"]');
