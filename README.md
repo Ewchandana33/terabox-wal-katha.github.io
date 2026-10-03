@@ -8,7 +8,7 @@
   <!-- Status Badges -->
   <img src="https://img.shields.io/badge/Total_Videos-4600+-red?style=for-the-badge&logo=youtube" alt="Total Videos Badge" />
   <img src="https://img.shields.io/badge/Total_Packs-10_Folders-0d47a1?style=for-the-badge&logo=terabox" alt="Total Packs Badge" />
-  <img src="https://img.shields.io/badge/Status-Active_Links-brightgreen?style=for-the-badge" alt="Status Active Badge" />
+  <img src="https://img.shields.io/badge/Status-Directory-brightgreen?style=for-the-badge" alt="Status Active Badge" />
 
   <br/><br/>
 
@@ -33,7 +33,7 @@ TeraBox is a secure, official cloud storage application used by millions worldwi
 * **🎁 Free 1024 GB (1 TB) Cloud Storage:** Get 1024 GB of free cloud space instantly upon app installation and email sign-up.
 * **💾 Save Videos Permanently:** Save any video from our collection directly to your own TeraBox account with one click. Even if links are removed here in the future, your saved copies will remain in your account forever!
 * **⚡ Ultra Fast & Smooth Streaming:** Play high-definition (HD) videos seamlessly without buffering compared to mobile browsers.
-* **🔒 100% Secure & Private:** Your personal storage and saved files are fully protected and private.
+* **🔒 Account protection:** Your personal storage and saved files are fully protected and private.
 
 ---
 
