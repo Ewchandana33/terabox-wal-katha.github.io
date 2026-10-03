@@ -1,5 +1,4 @@
 "use strict";
-
 /* Publish only links you are legally authorised to share. HTTPS only. */
 const BUNDLE_LINKS = Object.freeze({
     1: "https://1024terabox.com/s/1ZIc39rpZ067AuHdll_2WLA",
@@ -13,7 +12,6 @@ const BUNDLE_LINKS = Object.freeze({
     9: "https://1024terabox.com/s/13JMO9tr6W1vGDH4DCAIkPg",
     10: "https://1024terabox.com/s/1sJbqyVgz5GcW6kmvWWG9Yg"
 });
-
 /* Extra bundles shown in the "Show more links" dialog. */
 const EXTRA_BUNDLE_LINKS = Object.freeze([
     Object.freeze({
@@ -67,34 +65,26 @@ const EXTRA_BUNDLE_LINKS = Object.freeze([
         demo: false
     })
 ]);
-
 function getValidatedHttpsUrl(value) {
     if (typeof value !== "string") {
         return null;
     }
-
     const normalizedValue = value.trim();
-
     if (normalizedValue === "") {
         return null;
     }
-
     try {
         const url = new URL(normalizedValue);
-
         if (url.protocol !== "https:" || !url.hostname) {
             return null;
         }
-
         return url.href;
     } catch {
         return null;
     }
 }
-
 function enableBundle(link, destination, bundleNumber) {
     const description = link.querySelector("small");
-
     link.href = destination;
     link.target = "_blank";
     link.rel = "noopener noreferrer external nofollow";
@@ -104,15 +94,12 @@ function enableBundle(link, destination, bundleNumber) {
         "aria-label",
         `Open TeraBox bundle ${bundleNumber} in a new tab`
     );
-
     if (description) {
         description.textContent = "TERABOX COLLECTION";
     }
 }
-
 function keepBundleUnavailable(link, bundleNumber) {
     const description = link.querySelector("small");
-
     link.removeAttribute("href");
     link.removeAttribute("target");
     link.removeAttribute("rel");
@@ -122,57 +109,46 @@ function keepBundleUnavailable(link, bundleNumber) {
         "aria-label",
         `TeraBox bundle ${bundleNumber} is currently unavailable`
     );
-
     if (description) {
         description.textContent = "CURRENTLY UNAVAILABLE";
     }
 }
-
 function configurePrimaryBundleLinks() {
     const links = document.querySelectorAll(
         ".bundle-grid [data-bundle]"
     );
     const status = document.getElementById("bundle-status");
     let availableCount = 0;
-
     links.forEach((link) => {
         const bundleNumber = link.dataset.bundle;
         const configuredValue = BUNDLE_LINKS[bundleNumber];
         const destination = getValidatedHttpsUrl(configuredValue);
-
         if (destination) {
             enableBundle(link, destination, bundleNumber);
             availableCount += 1;
             return;
         }
-
         keepBundleUnavailable(link, bundleNumber);
     });
-
     if (!status) {
         return;
     }
-
     if (availableCount === 0) {
         status.textContent =
             "Bundle links are currently being updated.";
         status.classList.add("is-unavailable");
         return;
     }
-
     const extraCount = EXTRA_BUNDLE_LINKS.filter((bundle) => {
         return !bundle.demo && getValidatedHttpsUrl(bundle.url) !== null;
     }).length;
-
     const extraNote = extraCount > 0
         ? ` ${extraCount} more inside Show More Links.`
         : "";
-
     status.textContent =
         `${availableCount} of ${links.length} main bundles are available.${extraNote}`;
     status.classList.remove("is-unavailable");
 }
-
 function createExtraBundleElement(bundle) {
     const destination = getValidatedHttpsUrl(bundle.url);
     const link = document.createElement("a");
@@ -181,31 +157,24 @@ function createExtraBundleElement(bundle) {
     const copy = document.createElement("span");
     const title = document.createElement("strong");
     const description = document.createElement("small");
-
     link.className = "bundle-button extra-bundle-button";
     link.dataset.extraBundle = String(bundle.id);
-
     liveDot.className = "live-dot";
     liveDot.setAttribute("aria-hidden", "true");
-
     icon.className = "bundle-icon";
     icon.setAttribute("aria-hidden", "true");
     icon.textContent = String(bundle.id).padStart(2, "0");
-
     copy.className = "bundle-copy";
     title.textContent = `VIEW BUNDLE ${bundle.id}`;
     description.textContent = bundle.demo
         ? "DEMO PLACEHOLDER"
         : "TERABOX COLLECTION";
-
     copy.append(title, description);
     link.append(liveDot, icon, copy);
-
     if (!destination) {
         keepBundleUnavailable(link, bundle.id);
         return link;
     }
-
     link.href = destination;
     link.target = "_blank";
     link.rel = "noopener noreferrer external nofollow";
@@ -215,14 +184,11 @@ function createExtraBundleElement(bundle) {
             ? `Open demo placeholder for bundle ${bundle.id} in a new tab`
             : `Open TeraBox bundle ${bundle.id} in a new tab`
     );
-
     if (bundle.demo) {
         link.classList.add("is-demo");
     }
-
     return link;
 }
-
 /*
  * The "Show more links" button is added at startup, but the dialog and its
  * extra bundle elements are only built on the first click. This keeps the
@@ -232,29 +198,23 @@ function createMoreLinksInterface() {
     const visibleExtraBundles = EXTRA_BUNDLE_LINKS.filter((bundle) => {
         return !bundle.demo && getValidatedHttpsUrl(bundle.url) !== null;
     });
-
     if (visibleExtraBundles.length === 0) {
         return;
     }
-
     const bundleSection = document.getElementById("bundles");
     const primaryGrid = bundleSection?.querySelector(".bundle-grid");
-
     if (!bundleSection || !primaryGrid) {
         return;
     }
-
     if (document.getElementById("show-more-links")) {
         return;
     }
-
     const count = visibleExtraBundles.length;
     const controls = document.createElement("div");
     const showButton = document.createElement("button");
     const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)"
     );
-
     controls.className = "more-links-controls";
     showButton.className = "more-links-button";
     showButton.id = "show-more-links";
@@ -269,14 +229,41 @@ function createMoreLinksInterface() {
         </span>
         <span class="more-links-arrow" aria-hidden="true">↗</span>
     `;
-
     controls.append(showButton);
     primaryGrid.insertAdjacentElement("afterend", controls);
-
     let dialog = null;
     let topCloseButton = null;
     let isClosing = false;
-
+    let scrollMain = null;
+    let scrollBody = null;
+    let scrollHint = null;
+    let scrollHintText = null;
+    /* Shows how many extra links are still hidden below the visible area. */
+    function updateScrollHint() {
+        if (!dialog || !dialog.open || !scrollBody || !scrollHint) {
+            return;
+        }
+        const limit = scrollBody.getBoundingClientRect().bottom - 8;
+        const items = scrollBody.querySelectorAll(".extra-bundle-button");
+        let remaining = 0;
+        items.forEach((item) => {
+            if (item.getBoundingClientRect().bottom > limit) {
+                remaining += 1;
+            }
+        });
+        scrollHint.hidden = remaining === 0;
+        scrollMain.classList.toggle("has-more", remaining > 0);
+        if (remaining > 0) {
+            const label = remaining === 1
+                ? "1 MORE LINK BELOW"
+                : `${remaining} MORE LINKS BELOW`;
+            scrollHintText.textContent = label;
+            scrollHint.setAttribute(
+                "aria-label",
+                `Scroll down to see ${remaining} more bundle ${remaining === 1 ? "link" : "links"}`
+            );
+        }
+    }
     function buildDialog() {
         dialog = document.createElement("dialog");
         dialog.className = "extra-dialog";
@@ -299,14 +286,27 @@ function createMoreLinksInterface() {
                         <h3 id="extra-bundles-title" tabindex="-1">${count} EXTRA BUNDLE LINKS</h3>
                         <p id="extra-bundles-description">
                             More bundle links from the same directory.
+                            Scroll down to see all ${count} links.
                         </p>
                     </div>
                 </header>
-                <div class="extra-dialog-body">
-                    <div
-                        class="bundle-grid extra-bundle-grid"
-                        aria-label="Additional video bundle links"
-                    ></div>
+                <div class="extra-dialog-main" id="extra-dialog-main">
+                    <div class="extra-dialog-body">
+                        <div
+                            class="bundle-grid extra-bundle-grid"
+                            aria-label="Additional video bundle links"
+                        ></div>
+                    </div>
+                    <div class="extra-scroll-fade" aria-hidden="true"></div>
+                    <button
+                        class="extra-scroll-hint"
+                        id="extra-scroll-hint"
+                        type="button"
+                        hidden
+                    >
+                        <span class="extra-scroll-hint-arrow" aria-hidden="true">&darr;</span>
+                        <span id="extra-scroll-hint-text">SCROLL FOR MORE LINKS</span>
+                    </button>
                 </div>
                 <footer class="extra-dialog-footer">
                     <a
@@ -333,66 +333,65 @@ function createMoreLinksInterface() {
                 </footer>
             </div>
         `;
-
         const extraGrid = dialog.querySelector(".extra-bundle-grid");
-
         visibleExtraBundles.forEach((bundle) => {
             extraGrid.append(createExtraBundleElement(bundle));
         });
-
         document.body.append(dialog);
         showButton.setAttribute("aria-controls", dialog.id);
-
+        scrollMain = dialog.querySelector("#extra-dialog-main");
+        scrollBody = dialog.querySelector(".extra-dialog-body");
+        scrollHint = dialog.querySelector("#extra-scroll-hint");
+        scrollHintText = dialog.querySelector("#extra-scroll-hint-text");
+        scrollBody.addEventListener("scroll", updateScrollHint, {
+            passive: true
+        });
+        scrollHint.addEventListener("click", () => {
+            scrollBody.scrollBy({
+                top: Math.max(120, Math.round(scrollBody.clientHeight * 0.75)),
+                behavior: reducedMotion.matches ? "auto" : "smooth"
+            });
+        });
+        window.addEventListener("resize", updateScrollHint);
         topCloseButton = dialog.querySelector("#extra-dialog-x");
         topCloseButton.addEventListener("click", closeExtraBundles);
-
         dialog.addEventListener("click", (event) => {
             if (event.target === dialog) {
                 closeExtraBundles();
             }
         });
-
         dialog.addEventListener("close", handleClosed);
     }
-
     function openExtraBundles() {
         if (!dialog) {
             buildDialog();
         }
-
         if (dialog.open) {
             return;
         }
-
         isClosing = false;
         dialog.classList.remove("is-closing");
-
         if (typeof dialog.showModal === "function") {
             dialog.showModal();
         } else {
             dialog.setAttribute("open", "");
         }
-
         document.body.classList.add("dialog-is-open");
         showButton.setAttribute("aria-expanded", "true");
-
         const body = dialog.querySelector(".extra-dialog-body");
-
         if (body) {
             body.scrollTop = 0;
         }
-
         if (topCloseButton instanceof HTMLButtonElement) {
             topCloseButton.focus({
                 preventScroll: true
             });
         }
+        window.requestAnimationFrame(updateScrollHint);
     }
-
     function finishClosing() {
         dialog.classList.remove("is-closing");
         isClosing = false;
-
         if (dialog.open && typeof dialog.close === "function") {
             dialog.close();
         } else {
@@ -400,22 +399,18 @@ function createMoreLinksInterface() {
             handleClosed();
         }
     }
-
     function closeExtraBundles() {
         if (!dialog || !dialog.open || isClosing) {
             return;
         }
-
         if (reducedMotion.matches) {
             finishClosing();
             return;
         }
-
         isClosing = true;
         dialog.classList.add("is-closing");
         window.setTimeout(finishClosing, 190);
     }
-
     function handleClosed() {
         document.body.classList.remove("dialog-is-open");
         showButton.setAttribute("aria-expanded", "false");
@@ -423,45 +418,35 @@ function createMoreLinksInterface() {
             preventScroll: true
         });
     }
-
     showButton.addEventListener("click", openExtraBundles);
 }
-
 function secureExternalLinks() {
     const links = document.querySelectorAll('a[target="_blank"]');
-
     links.forEach((link) => {
         const relValues = new Set(
             (link.getAttribute("rel") || "")
                 .split(/\s+/)
                 .filter(Boolean)
         );
-
         relValues.add("noopener");
         relValues.add("noreferrer");
         relValues.add("external");
-
         link.setAttribute(
             "rel",
             Array.from(relValues).join(" ")
         );
     });
 }
-
 function updateCopyrightYear() {
     const yearElement = document.getElementById("current-year");
-
     if (!yearElement) {
         return;
     }
-
     const currentYear = new Date().getFullYear();
-
     yearElement.textContent = String(
         Math.max(2026, currentYear)
     );
 }
-
 function configureDarkBrowserTheme() {
     const themeColor = document.querySelector(
         'meta[name="theme-color"]'
@@ -469,18 +454,14 @@ function configureDarkBrowserTheme() {
     const colorScheme = document.querySelector(
         'meta[name="color-scheme"]'
     );
-
     if (themeColor) {
         themeColor.setAttribute("content", "#050505");
     }
-
     if (colorScheme) {
         colorScheme.setAttribute("content", "dark");
     }
-
     document.documentElement.style.colorScheme = "dark";
 }
-
 function configureAccessGuide() {
     const launcher = document.getElementById("help-launcher");
     const dialog = document.getElementById(
@@ -492,51 +473,40 @@ function configureAccessGuide() {
     const doneButton = document.getElementById(
         "access-dialog-done"
     );
-
     if (
         !(launcher instanceof HTMLButtonElement) ||
         !(dialog instanceof HTMLDialogElement)
     ) {
         return;
     }
-
     let shouldRestoreLauncherFocus = false;
-
     function openGuide() {
         shouldRestoreLauncherFocus = true;
-
         if (typeof dialog.showModal === "function") {
             dialog.showModal();
         } else {
             dialog.setAttribute("open", "");
         }
-
         document.body.classList.add("dialog-is-open");
-
         if (closeButton instanceof HTMLButtonElement) {
             closeButton.focus();
         }
     }
-
     function closeGuide(options = {}) {
         const {
             scrollToBundles = false
         } = options;
-
         if (dialog.open && typeof dialog.close === "function") {
             dialog.close();
         } else {
             dialog.removeAttribute("open");
             document.body.classList.remove("dialog-is-open");
-
             if (shouldRestoreLauncherFocus) {
                 launcher.focus();
             }
         }
-
         if (scrollToBundles) {
             const bundles = document.getElementById("bundles");
-
             if (bundles) {
                 window.setTimeout(() => {
                     bundles.scrollIntoView({
@@ -551,15 +521,12 @@ function configureAccessGuide() {
             }
         }
     }
-
     launcher.addEventListener("click", openGuide);
-
     if (closeButton) {
         closeButton.addEventListener("click", () => {
             closeGuide();
         });
     }
-
     if (doneButton) {
         doneButton.addEventListener("click", () => {
             closeGuide({
@@ -567,30 +534,24 @@ function configureAccessGuide() {
             });
         });
     }
-
     dialog.addEventListener("click", (event) => {
         if (event.target === dialog) {
             closeGuide();
         }
     });
-
     dialog.addEventListener("cancel", () => {
         document.body.classList.remove("dialog-is-open");
     });
-
     dialog.addEventListener("close", () => {
         document.body.classList.remove("dialog-is-open");
-
         if (shouldRestoreLauncherFocus) {
             launcher.focus({
                 preventScroll: true
             });
         }
-
         shouldRestoreLauncherFocus = false;
     });
 }
-
 /*
  * Ad slots stay collapsed until an ad has actually rendered inside them.
  * The ad network script is injected only when the slot is about to scroll
@@ -601,16 +562,12 @@ function loadAdSlot(slot) {
     if (slot.dataset.adLoaded === "true") {
         return false;
     }
-
     const frame = slot.querySelector(".ad-frame");
     const source = getValidatedHttpsUrl(slot.dataset.adScript);
-
     if (!frame || !source) {
         return false;
     }
-
     slot.dataset.adLoaded = "true";
-
     if (slot.dataset.adKey) {
         window.atOptions = {
             key: slot.dataset.adKey,
@@ -620,47 +577,34 @@ function loadAdSlot(slot) {
             params: {}
         };
     }
-
     const script = document.createElement("script");
-
     script.async = true;
     script.src = source;
     script.setAttribute("data-cfasync", "false");
     frame.appendChild(script);
-
     return true;
 }
-
 function configureAdSlots() {
     const slots = document.querySelectorAll("[data-ad-slot]");
-
     slots.forEach((slot) => {
         const frame = slot.querySelector(".ad-frame");
-
         if (!frame) {
             return;
         }
-
         let timer = 0;
-
         function hasRenderedAd() {
             const candidates = frame.querySelectorAll(
                 "iframe, img, video, a"
             );
-
             return Array.prototype.some.call(candidates, (node) => {
                 return node.offsetWidth >= 50 && node.offsetHeight >= 30;
             });
         }
-
         function applyState() {
             timer = 0;
-
             const isReady = hasRenderedAd();
-
             slot.classList.toggle("is-pending", !isReady);
             slot.classList.toggle("is-ready", isReady);
-
             if (isReady) {
                 slot.removeAttribute("inert");
                 slot.removeAttribute("aria-hidden");
@@ -669,20 +613,16 @@ function configureAdSlots() {
                 slot.setAttribute("aria-hidden", "true");
             }
         }
-
         function scheduleCheck() {
             if (timer) {
                 return;
             }
-
             timer = window.setTimeout(applyState, 120);
         }
-
         function activate() {
             if (!loadAdSlot(slot)) {
                 return;
             }
-
             if (typeof MutationObserver === "function") {
                 new MutationObserver(scheduleCheck).observe(frame, {
                     childList: true,
@@ -691,22 +631,18 @@ function configureAdSlots() {
                     attributeFilter: ["style", "class", "hidden", "width", "height"]
                 });
             }
-
             if (typeof ResizeObserver === "function") {
                 new ResizeObserver(scheduleCheck).observe(frame);
             }
-
             [1000, 2500, 5000, 10000, 20000].forEach((delay) => {
                 window.setTimeout(scheduleCheck, delay);
             });
         }
-
         if (typeof IntersectionObserver === "function") {
             const observer = new IntersectionObserver((entries) => {
                 const visible = entries.some((entry) => {
                     return entry.isIntersecting;
                 });
-
                 if (visible) {
                     observer.disconnect();
                     activate();
@@ -714,11 +650,9 @@ function configureAdSlots() {
             }, {
                 rootMargin: "600px 0px"
             });
-
             observer.observe(slot);
             return;
         }
-
         window.addEventListener("load", () => {
             window.setTimeout(activate, 2000);
         }, {
@@ -726,27 +660,22 @@ function configureAdSlots() {
         });
     });
 }
-
 let coreInitialized = false;
 let remainingInitialized = false;
-
 function initializeCore() {
     if (coreInitialized) {
         return;
     }
-
     coreInitialized = true;
     configureDarkBrowserTheme();
     configurePrimaryBundleLinks();
     createMoreLinksInterface();
     secureExternalLinks();
 }
-
 function initializeRemaining() {
     if (remainingInitialized) {
         return;
     }
-
     remainingInitialized = true;
     initializeCore();
     secureExternalLinks();
@@ -754,12 +683,10 @@ function initializeRemaining() {
     configureAccessGuide();
     configureAdSlots();
 }
-
 function initializeApplication() {
     if (document.querySelector('[data-bundle="10"]')) {
         initializeCore();
     }
-
     if (document.readyState === "loading") {
         document.addEventListener(
             "DOMContentLoaded",
@@ -772,6 +699,5 @@ function initializeApplication() {
         initializeRemaining();
     }
 }
-
 initializeApplication();
 /* APP_SCRIPT_COMPLETE */
