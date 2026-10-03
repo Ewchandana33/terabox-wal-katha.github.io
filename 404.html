@@ -102,6 +102,23 @@
         .home-button:hover {
             filter: brightness(1.12);
         }
+        .error-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 18px;
+            justify-content: center;
+            margin-top: 22px;
+        }
+        .error-links a {
+            color: var(--text-soft);
+            font-size: 0.84rem;
+            font-weight: 700;
+            text-decoration-color: var(--red);
+            text-underline-offset: 4px;
+        }
+        .error-links a:hover {
+            color: var(--red-bright);
+        }
     </style>
 </head>
 <body>
@@ -123,6 +140,14 @@
             <a class="home-button" href="/">
                 Return to homepage
             </a>
+            <nav class="error-links" aria-label="Helpful pages">
+                <a href="/guides">Guides</a>
+                <a href="/terabox-guide">Setup</a>
+                <a href="/troubleshooting">Fixes</a>
+                <a href="/safety-guide">Safety</a>
+                <a href="/faq">FAQ</a>
+                <a href="/contact">Contact</a>
+            </nav>
         </section>
     </main>
 </body>
