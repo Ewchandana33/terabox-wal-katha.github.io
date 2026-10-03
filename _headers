@@ -3,5 +3,17 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Cross-Origin-Opener-Policy: same-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
-  Strict-Transport-Security: max-age=31536000
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+/public/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/*.css
+  Cache-Control: public, max-age=3600, must-revalidate
+/app.js
+  Cache-Control: public, max-age=3600, must-revalidate
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+/feed.xml
+  Cache-Control: public, max-age=3600
+/manifest.webmanifest
+  Cache-Control: public, max-age=86400
