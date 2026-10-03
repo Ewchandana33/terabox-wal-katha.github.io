@@ -2,4 +2,3 @@ User-agent: *
 Allow: /
 
 Sitemap: https://teraboxlinks.pages.dev/sitemap.xml
-Sitemap: https://teraboxlinks.pages.dev/sitemap.txt
