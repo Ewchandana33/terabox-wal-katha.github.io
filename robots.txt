@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
 
+User-agent: Googlebot-Image
+Allow: /public/images/
+
 Sitemap: https://teraboxlinks.pages.dev/sitemap.xml
