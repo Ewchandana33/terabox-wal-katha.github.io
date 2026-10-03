@@ -1,8 +1,8 @@
 {
     "id": "/",
     "name": "terabox video link",
-    "short_name": "terabox viral video",
-    "description": "Your global hub for terabox viral video content and external bundle links.",
+    "short_name": "terabox video link",
+    "description": "A directory of TeraBox video link bundles with setup, troubleshooting and safety guides.",
     "lang": "en",
     "dir": "ltr",
     "start_url": "/",
