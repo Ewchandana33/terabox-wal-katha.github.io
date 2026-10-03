@@ -6,6 +6,7 @@
         <description>TeraBox link directory with setup, troubleshooting and safety guides for opening, saving and downloading shared files.</description>
         <language>en</language>
         <lastBuildDate>Sat, 03 Oct 2026 00:00:00 GMT</lastBuildDate>
+        <ttl>360</ttl>
         <atom:link href="https://teraboxlinks.pages.dev/feed.xml" rel="self" type="application/rss+xml"/>
         <item>
             <title>How to Use TeraBox Shared Links</title>
